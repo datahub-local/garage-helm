@@ -1,0 +1,19 @@
+garage:
+  # Use only 2 replicas per object
+  replicationFactor: 2
+
+# Start 4 instances (StatefulSets) of garage
+deployment:
+  replicaCount: 4
+
+# Override default storage class and size
+persistence:
+  meta:
+    storageClass: "local-path"
+    size: 100Mi
+  data:
+    storageClass: "local-path"
+    size: 250Mi
+
+webui:
+  enabled: true

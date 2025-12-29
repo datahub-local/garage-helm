@@ -1,0 +1,470 @@
+# Default values for garage.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Additional labels to add to all resources created by this chart
+commonLabels: {}
+#   app.kubernetes.io/part-of: storage
+#   team: platform
+
+# Garage configuration. These values go to garage.toml
+garage:
+  # -- Can be changed for better performance on certain systems
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#db_engine
+  dbEngine: "lmdb"
+
+  # -- Defaults is 1MB
+  # An increase can result in better performance in certain scenarios
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#block_size
+  blockSize: "1048576"
+
+  # -- Default to 3 replicas, see the replication_factor section at
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#replication_factor
+  replicationFactor: "3"
+
+  # -- By default, enable read-after-write consistency guarantees, see the consistency_mode section at
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#consistency_mode
+  consistencyMode: "consistent"
+
+  # -- zstd compression level of stored blocks
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#compression_level
+  compressionLevel: "1"
+
+  # -- If this value is set, Garage will automatically take a snapshot of the metadata DB file at a regular interval and save it in the metadata directory.
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#metadata_auto_snapshot_interval
+  metadataAutoSnapshotInterval: ""
+
+  rpc:
+    bindAddr: "[::]:3901"
+
+  secret:
+    # -- Flag to control if a kubernetes secret should be created during deployment
+    create: true
+    # -- Name of the secret. If you want to use a pre-existing kubernetes secret use the name of an already existing secret and set secret.create to false
+    name: ""
+    # -- If not given, a random secret will be generated and stored in a Secret object
+    rpcSecret: ""
+    # -- If not given, a random secret will be generated and stored in a Secret object
+    adminToken: ""
+
+  # -- This is not required if you use the integrated kubernetes discovery
+  bootstrapPeers: []
+  # -- Set to true if you want to use k8s discovery but install the CRDs manually outside
+  # of the helm chart, for example if you operate at namespace level without cluster ressources
+  kubernetesSkipCrd: false
+  s3:
+    api:
+      region: "garage"
+      rootDomain: ".s3.garage.tld"
+    web:
+      rootDomain: ".web.garage.tld"
+      index: "index.html"
+
+  # -- if not empty string, allow using an existing ConfigMap for the garage.toml,
+  # if set, ignores garage.toml
+  existingConfigMap: ""
+
+  # -- String Template for the garage configuration
+  # if set, ignores above values.
+  # Values can be templated,
+  # see https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/
+  garageTomlString: ""
+
+# Data persistence
+persistence:
+  enabled: true
+  meta:
+    # -- Use a storage class with a preferably fast storage type
+    storageClass: ~
+    size: 100Mi
+    # used only for daemon sets
+    hostPath: /var/lib/garage/meta
+  data:
+    # -- This would classically be a "slow" storage type like HDDs
+    storageClass: ~
+    size: 100Mi
+    # used only for daemon sets
+    hostPath: /var/lib/garage/data
+
+# Deployment configuration
+deployment:
+  # -- Switchable to DaemonSet
+  kind: StatefulSet
+  # -- Number of StatefulSet replicas/garage nodes to start
+  replicaCount: 3
+  # -- If using statefulset, allow Parallel or OrderedReady (default)
+  podManagementPolicy: OrderedReady
+
+image:
+  # -- default to amd64 docker image
+  repository: dxflrs/amd64_garage
+  # -- set the image tag, please prefer using the chart version and not this
+  # to avoid compatibility issues
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# -- set if you need credentials to pull your custom image
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# -- additonal pod annotations
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  fsGroupChangePolicy: "OnRootMismatch"
+  runAsNonRoot: true
+
+securityContext:
+  # -- The default security context is heavily restricted,
+  # feel free to tune it to your requirements
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  # -- You can rely on any service to expose your cluster
+  # - ClusterIP (+ Ingress)
+  # - NodePort (+ Ingress)
+  # - LoadBalancer
+  type: ClusterIP
+  ports:
+    s3Api: 3900
+    rpc: 3901
+    s3Web: 3902
+    admin: 3903
+
+ingress:
+  s3:
+    api:
+      enabled: false
+      # -- Rely _either_ on the className or the annotation below but not both!
+      # If you want to use the className, set
+      # className: "nginx"
+      # and replace "nginx" by an Ingress controller name,
+      # examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers).
+      annotations: {}
+        # kubernetes.io/ingress.class: "nginx"
+        # kubernetes.io/tls-acme: "true"
+      labels: {}
+      hosts:
+        # -- garage S3 API endpoint, to be used with awscli for example
+        - host: "s3.garage.tld"
+          paths:
+            - path: /
+              pathType: Prefix
+        # -- garage S3 API endpoint, DNS style bucket access
+        - host: "*.s3.garage.tld"
+          paths:
+            - path: /
+              pathType: Prefix
+      tls: []
+      #  - secretName: my-garage-cluster-tls
+      #    hosts:
+      #      - kubernetes.docker.internal
+    web:
+      enabled: false
+      # -- Rely _either_ on the className or the annotation below but not both!
+      # If you want to use the className, set
+      # className: "nginx"
+      # and replace "nginx" by an Ingress controller name,
+      # examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers).
+      annotations: {}
+        # kubernetes.io/ingress.class: nginx
+        # kubernetes.io/tls-acme: "true"
+      labels: {}
+      hosts:
+        # --  wildcard website access with bucket name prefix
+        - host: "*.web.garage.tld"
+          paths:
+            - path: /
+              pathType: Prefix
+        # -- specific bucket access with FQDN bucket
+        - host: "mywebpage.example.com"
+          paths:
+            - path: /
+              pathType: Prefix
+      tls: []
+      #  - secretName: my-garage-cluster-tls
+      #    hosts:
+      #      - kubernetes.docker.internal
+
+# -- Support for gateway api
+gatewayApi:
+  s3:
+    # -- Creates route for the S3 api
+    api:
+      # -- Flag to control if HTTP route should be created
+      enabled: false
+      # -- Additional labels for the HTTPRoute
+      labels: {}
+      # -- Additional annotations for the HTTPRoute
+      annotations: {}
+      # -- Hostnames of the HTTPRoute
+      hostnames:
+        - s3.garage.ltd
+        - "*.s3.garage.ltd"
+
+      # -- Gateway reference that the HTTPRoute should bind against
+      parentRefs: []
+      # - group: gateway.networking.k8s.io
+      #   kind: Gateway
+      #   name: example-gateway
+      #   namespace: gateway-namespace
+
+      # -- Matches for the default rule
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      # -- Filter that should be added to the default rule
+      filters: []
+
+      # -- Any custom rule you want to specify
+      additionalRules: {}
+
+    # -- Route for Web buckets
+    web:
+      # -- Flag to control if HTTP route should be created
+      enabled: false
+      # -- Additional labels for the HTTPRoute
+      labels: {}
+      # -- Additional annotations for the HTTPRoute
+      annotations: {}
+      # -- Hostnames of the HTTPRoute
+      hostnames:
+        - "*.web.garage.tld"
+
+      # -- Gateway reference that the HTTPRoute should bind against
+      parentRefs: []
+      # - group: gateway.networking.k8s.io
+      #   kind: Gateway
+      #   name: example-gateway
+      #   namespace: gateway-namespace
+
+      # -- Matches for the default rule
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+
+      # -- Filter that should be added to the default rule
+      filters: []
+
+      # -- Any custom rule you want to specify
+      additionalRules: {}
+
+resources: {}
+  # The following are indicative for a small-size deployement, for anything serious double them.
+  # limits:
+  #   cpu: 100m
+  #   memory: 1024Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 512Mi
+
+# -- Specifies a livenessProbe
+livenessProbe: {}
+  #httpGet:
+  #  path: /health
+  #  port: 3903
+  #initialDelaySeconds: 5
+  #periodSeconds: 30
+# -- Specifies a readinessProbe
+readinessProbe: {}
+  #httpGet:
+  #  path: /health
+  #  port: 3903
+  #initialDelaySeconds: 5
+  #periodSeconds: 30
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+environment: {}
+
+extraVolumes: {}
+
+extraVolumeMounts: {}
+
+monitoring:
+  metrics:
+    # -- If true, a service for monitoring is created with a prometheus.io/scrape annotation
+    enabled: false
+    serviceMonitor:
+      # -- If true, a ServiceMonitor CRD is created for a prometheus operator
+      # https://github.com/coreos/prometheus-operator
+      enabled: false
+      path: /metrics
+      #  namespace: monitoring  (defaults to use the namespace this chart is deployed to)
+      labels: {}
+      interval: 15s
+      scheme: http
+      tlsConfig: {}
+      scrapeTimeout: 10s
+      relabelings: []
+  tracing:
+    # -- specify a sink endpoint for OpenTelemetry Traces, eg. `http://localhost:4317`
+    sink: ""
+  grafanaDashboard:
+    # -- If enabled deploys the grafana dashboard as configmap
+    enabled: false
+    annotations: {}
+
+# Garage WebUI configuration
+webui:
+  # -- Enable the garage-webui deployment
+  enabled: false
+  
+  # -- Number of WebUI replicas
+  replicaCount: 1
+
+  image:
+    # -- garage-webui image repository
+    repository: khairul169/garage-webui
+    # -- garage-webui image tag
+    tag: latest
+    # -- image pull policy
+    pullPolicy: IfNotPresent
+
+  # -- image pull secrets for private registries
+  imagePullSecrets: []
+
+  # -- pod annotations
+  podAnnotations: {}
+
+  # -- pod security context
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+
+  # -- container security context
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+
+  # -- WebUI service configuration
+  service:
+    # -- Service type
+    type: ClusterIP
+    # -- Service port
+    port: 3909
+    # -- Service annotations
+    annotations: {}
+
+  # -- WebUI resources
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 256Mi
+    # requests:
+    #   cpu: 50m
+    #   memory: 128Mi
+
+  # -- WebUI liveness probe
+  livenessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: 3000
+    # initialDelaySeconds: 10
+    # periodSeconds: 30
+
+  # -- WebUI readiness probe
+  readinessProbe: {}
+    # httpGet:
+    #   path: /
+    #   port: 3000
+    # initialDelaySeconds: 5
+    # periodSeconds: 10
+
+  # -- node selector for WebUI pods
+  nodeSelector: {}
+
+  # -- tolerations for WebUI pods
+  tolerations: []
+
+  # -- affinity for WebUI pods
+  affinity: {}
+
+  # -- extra volumes for WebUI
+  extraVolumes: {}
+
+  # -- extra volume mounts for WebUI
+  extraVolumeMounts: {}
+
+  # -- Ingress configuration for WebUI
+  ingress:
+    # -- Enable ingress for WebUI
+    enabled: false
+    # -- Ingress class name
+    className: ""
+    # -- Ingress annotations
+    annotations: {}
+      # kubernetes.io/ingress.class: "nginx"
+      # kubernetes.io/tls-acme: "true"
+    # -- Additional labels for the ingress
+    labels: {}
+    # -- Ingress hosts configuration
+    hosts:
+      - host: "garage-webui.tld"
+        paths:
+          - path: /
+            pathType: Prefix
+    # -- TLS configuration
+    tls: []
+      # - secretName: my-garage-webui-tls
+      #   hosts:
+      #     - garage-webui.tld
+
+  # -- Gateway API configuration for WebUI
+  gatewayApi:
+    # -- Enable gateway API HTTPRoute for WebUI
+    enabled: false
+    # -- Additional labels for the HTTPRoute
+    labels: {}
+    # -- Additional annotations for the HTTPRoute
+    annotations: {}
+    # -- Hostnames of the HTTPRoute
+    hostnames:
+      - garage-webui.tld
+
+    # -- Gateway reference that the HTTPRoute should bind against
+    parentRefs: []
+      # - group: gateway.networking.k8s.io
+      #   kind: Gateway
+      #   name: example-gateway
+      #   namespace: gateway-namespace
+
+    # -- Matches for the default rule
+    matches:
+      - path:
+          type: PathPrefix
+          value: /
+
+    # -- Filters that should be added to the default rule
+    filters: []
+
+    # -- Any custom rule you want to specify
+    additionalRules: {}

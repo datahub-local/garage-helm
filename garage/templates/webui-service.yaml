@@ -1,0 +1,21 @@
+{{- if .Values.webui.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "garage.fullname" . }}-webui
+  labels:
+    {{- include "garage.webui.labels" . | nindent 4 }}
+  {{- with .Values.webui.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.webui.service.type }}
+  ports:
+    - port: {{ .Values.webui.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "garage.webui.selectorLabels" . | nindent 4 }}
+{{- end }}

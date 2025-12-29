@@ -1,0 +1,22 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: dev-cluster
+servers: 1
+agents: 1
+image: rancher/k3s:v1.35.0-k3s1
+network: dev-cluster
+kubeAPI:
+  hostIP: "127.0.0.1" # where the Kubernetes API will be listening on
+  hostPort: "6445"
+ports:
+  - port: 8080:80
+    nodeFilters:
+      - loadbalancer
+  - port: 8443:443
+    nodeFilters:
+      - loadbalancer
+options:
+  k3d:
+    wait: true
+    timeout: "60s"

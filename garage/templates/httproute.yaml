@@ -1,0 +1,85 @@
+
+---
+{{- if .Values.gatewayApi.s3.api.enabled -}}
+{{- $fullName := include "garage.fullname" . -}}
+{{- $svcPort := .Values.service.ports.s3Api -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $fullName }}-s3-api
+  labels:
+    {{- include "garage.labels" . | nindent 4 }}
+    {{- with .Values.gatewayApi.s3.api.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.gatewayApi.s3.api.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.gatewayApi.s3.api.hostnames }}
+  hostnames:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+  {{- with .Values.gatewayApi.s3.api.parentRefs }}
+  parentRefs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- if .Values.gatewayApi.s3.api.additionalRules }}
+    {{- tpl (toYaml .Values.gatewayApi.s3.api.additionalRules) $ | nindent 4 }}
+    {{- end }}
+    - backendRefs:
+        - name: {{ $fullName }}
+          port: {{ $svcPort }}
+          weight: 100
+      {{- with .Values.gatewayApi.s3.api.matches }}
+      matches:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gatewayApi.s3.api.filters }}
+        {{- toYaml . | nindent 8 }}
+      {{- end -}}
+{{- end }}
+---
+{{- if .Values.gatewayApi.s3.web.enabled -}}
+{{- $fullName := include "garage.fullname" . -}}
+{{- $svcPort := .Values.service.ports.s3Web -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $fullName }}-s3-web
+  labels:
+    {{- include "garage.labels" . | nindent 4 }}
+    {{- with .Values.gatewayApi.s3.web.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.gatewayApi.s3.web.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.gatewayApi.s3.web.hostnames }}
+  hostnames:
+    {{- tpl (toYaml .) $ | nindent 4 }}
+  {{- end }}
+  {{- with .Values.gatewayApi.s3.web.parentRefs }}
+  parentRefs:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- if .Values.gatewayApi.s3.web.additionalRules }}
+    {{- tpl (toYaml .Values.gatewayApi.s3.web.additionalRules) $ | nindent 4 }}
+    {{- end }}
+    - backendRefs:
+        - name: {{ $fullName }}
+          port: {{ $svcPort }}
+          weight: 100
+      {{- with .Values.gatewayApi.s3.web.matches }}
+      matches:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.gatewayApi.s3.web.filters }}
+        {{- toYaml . | nindent 8 }}
+      {{- end -}}
+{{- end }}

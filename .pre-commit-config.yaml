@@ -1,0 +1,9 @@
+repos:
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: ""
+    hooks:
+      - id: helm-docs-container
+        args:
+          # Use root folder as the main repo dir is the chart itself
+          - --chart-search-root=garage
+          - --template-files=README.md.gotmpl
