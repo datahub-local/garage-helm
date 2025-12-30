@@ -12,8 +12,10 @@ spec:
       {{- include "garage.webui.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.webui.podAnnotations }}
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      {{- with .Values.webui.podAnnotations }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
@@ -34,14 +36,21 @@ spec:
           imagePullPolicy: {{ .Values.webui.image.pullPolicy }}
           env:
             - name: API_BASE_URL
-              value: "http://{{ include "garage.fullname" . }}:3903"
+              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.ports.admin }}"
             - name: S3_ENDPOINT_URL
-              value: "http://{{ include "garage.fullname" . }}:{{ .Values.service.ports.s3Api }}"
+              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.ports.s3Api }}"
             - name: API_ADMIN_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "garage.secretName" . }}
                   key: adminToken
+            {{- if .Values.webui.auth.enabled }}
+            - name: AUTH_USER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.webui.auth.existingSecret | default (include "garage.secretName" .) }}
+                  key: webuiAuthUserPass
+            {{- end }}
           ports:
             - name: http
               containerPort: 3909

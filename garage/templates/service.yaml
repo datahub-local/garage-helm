@@ -8,11 +8,6 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.ports.s3Api }}
-      targetPort: 3900
-      protocol: TCP
-      name: s3-api
-  ports:
-    - port: {{ .Values.service.ports.s3Api }}
       targetPort: s3-api
       protocol: TCP
       name: s3-api

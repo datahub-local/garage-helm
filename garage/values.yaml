@@ -82,7 +82,7 @@ persistence:
   data:
     # -- This would classically be a "slow" storage type like HDDs
     storageClass: ~
-    size: 100Mi
+    size: 1Gi
     # used only for daemon sets
     hostPath: /var/lib/garage/data
 
@@ -304,6 +304,7 @@ extraVolumes: {}
 
 extraVolumeMounts: {}
 
+# -- Garage Cluster monmitoring configuration
 monitoring:
   metrics:
     # -- If true, a service for monitoring is created with a prometheus.io/scrape annotation
@@ -328,6 +329,74 @@ monitoring:
     enabled: false
     annotations: {}
 
+# -- Garage Cluster configuration
+clusterConfig:
+  # -- Enable the cluster configuration job
+  enabled: false
+  
+  layout:
+    # -- Enable layout configuration
+    enabled: true
+    # -- Zone to assign nodes to
+    zone: dc1
+    # -- Capacity to assign to nodes. If empty, defaults to persistence.data.size
+    capacity: ""
+    
+  # -- List of buckets to create
+  buckets: []
+  # - name: my-bucket
+  #   public: false
+  
+  # -- List of keys to create
+  # keyId format: must start with 'GK' followed by 24 hex-encoded characters (12 bytes)
+  # secretKey format: must be 64 hex-encoded characters (32 bytes)
+  keys: []
+  # - keyId: GK12345678901234567890abcd
+  #   secretKey: 123456789012345678901234567890123456789012345678901234567890abcd
+  #   buckets: [] # Optional list of buckets to allow access to
+  
+  # -- Extra commands to run
+  extraCommands: []
+
+  image:
+    # -- Image to use for the configuration job (defaults to the same as garage)
+    repository: "" 
+    tag: ""
+    pullPolicy: IfNotPresent
+  
+  # -- Image pull secrets
+  imagePullSecrets: []
+  
+  # -- Pod annotations
+  podAnnotations: {}
+  
+  # -- Pod security context
+  podSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: "OnRootMismatch"
+    runAsNonRoot: true
+    
+  # -- Container security context
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    
+  # -- Resources for the job
+  resources: {}
+  
+  # -- Node selector
+  nodeSelector: {}
+  
+  # -- Tolerations
+  tolerations: []
+  
+  # -- Affinity
+  affinity: {}
+
 # Garage WebUI configuration
 webui:
   # -- Enable the garage-webui deployment
@@ -343,6 +412,16 @@ webui:
     tag: latest
     # -- image pull policy
     pullPolicy: IfNotPresent
+
+  auth:
+    # -- Enable authentication for WebUI
+    enabled: false
+    # -- Use an existing secret for authentication (must contain 'webuiAuthUserPass' key)
+    existingSecret: ""
+    # -- Pre-hashed password in bcrypt format (username:hash), REQUIRED when auth is enabled
+    # Generate with: htpasswd -nbBC 10 "username" "password"
+    # Example: "admin:$2y$10$DSTi9o..."
+    userPassHash: ""
 
   # -- image pull secrets for private registries
   imagePullSecrets: []
@@ -468,3 +547,7 @@ webui:
 
     # -- Any custom rule you want to specify
     additionalRules: {}
+
+# -- Extra resources to deploy
+extraResources: []
+
