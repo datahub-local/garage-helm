@@ -32,6 +32,7 @@ tests:
   - it: should use default webui image
     set:
       webui.enabled: true
+      webui.image.tag: latest
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
