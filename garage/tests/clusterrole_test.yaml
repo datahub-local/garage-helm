@@ -1,0 +1,147 @@
+suite: ClusterRole and ClusterRoleBinding tests
+templates:
+  - clusterrole.yaml
+tests:
+  # Basic ClusterRole tests
+  - it: should create ClusterRole
+    asserts:
+      - isKind:
+          of: ClusterRole
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: manage-crds-NAMESPACE-RELEASE-NAME
+        documentIndex: 0
+
+  - it: should create ClusterRoleBinding
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: allow-crds-for-NAMESPACE-RELEASE-NAME
+        documentIndex: 1
+
+  # ClusterRole name tests
+  - it: should include namespace and release name in ClusterRole name
+    release:
+      namespace: my-namespace
+      name: my-release
+    asserts:
+      - equal:
+          path: metadata.name
+          value: manage-crds-my-namespace-my-release
+        documentIndex: 0
+
+  - it: should include namespace and release name in ClusterRoleBinding name
+    release:
+      namespace: my-namespace
+      name: my-release
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-crds-for-my-namespace-my-release
+        documentIndex: 1
+
+  # ClusterRole rules tests
+  - it: should have rules for CRDs
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["apiextensions.k8s.io"]
+            resources: ["customresourcedefinitions"]
+            verbs: ["get", "list", "watch", "create", "patch"]
+        documentIndex: 0
+
+  - it: should have rules for garagenodes
+    asserts:
+      - contains:
+          path: rules
+          content:
+            apiGroups: ["deuxfleurs.fr"]
+            resources: ["garagenodes"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        documentIndex: 0
+
+  # ClusterRoleBinding subject tests
+  - it: should reference correct service account
+    release:
+      namespace: test-namespace
+    asserts:
+      - equal:
+          path: subjects[0].kind
+          value: ServiceAccount
+        documentIndex: 1
+      - equal:
+          path: subjects[0].name
+          value: RELEASE-NAME-garage
+        documentIndex: 1
+      - equal:
+          path: subjects[0].namespace
+          value: test-namespace
+        documentIndex: 1
+
+  - it: should reference custom service account name
+    set:
+      serviceAccount.name: custom-sa
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: custom-sa
+        documentIndex: 1
+
+  # ClusterRoleBinding roleRef tests
+  - it: should reference correct ClusterRole
+    release:
+      namespace: my-namespace
+      name: my-release
+    asserts:
+      - equal:
+          path: roleRef.kind
+          value: ClusterRole
+        documentIndex: 1
+      - equal:
+          path: roleRef.name
+          value: manage-crds-my-namespace-my-release
+        documentIndex: 1
+      - equal:
+          path: roleRef.apiGroup
+          value: rbac.authorization.k8s.io
+        documentIndex: 1
+
+  # Labels tests
+  - it: should include common labels on ClusterRole
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+        documentIndex: 0
+
+  - it: should include common labels on ClusterRoleBinding
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+        documentIndex: 1
+
+  - it: should include custom common labels
+    set:
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+        documentIndex: 0
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+        documentIndex: 1

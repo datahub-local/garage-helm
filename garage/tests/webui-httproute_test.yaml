@@ -1,0 +1,175 @@
+suite: WebUI HTTPRoute tests (Gateway API)
+templates:
+  - webui-httproute.yaml
+tests:
+  # Basic WebUI HTTPRoute tests - disabled by default
+  - it: should not create WebUI HTTPRoute by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create WebUI HTTPRoute when only webui enabled
+    set:
+      webui.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create WebUI HTTPRoute when both webui and gatewayApi enabled
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+    asserts:
+      - isKind:
+          of: HTTPRoute
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-webui
+
+  # Hostnames tests
+  - it: should set hostnames
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      webui.gatewayApi.hostnames:
+        - webui.example.com
+        - garage-ui.example.com
+    asserts:
+      - contains:
+          path: spec.hostnames
+          content: webui.example.com
+      - contains:
+          path: spec.hostnames
+          content: garage-ui.example.com
+
+  # Parent refs tests
+  - it: should set parent refs
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      webui.gatewayApi.parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: my-gateway
+          namespace: gateway-ns
+    asserts:
+      - equal:
+          path: spec.parentRefs[0].group
+          value: gateway.networking.k8s.io
+      - equal:
+          path: spec.parentRefs[0].kind
+          value: Gateway
+      - equal:
+          path: spec.parentRefs[0].name
+          value: my-gateway
+      - equal:
+          path: spec.parentRefs[0].namespace
+          value: gateway-ns
+
+  # Matches tests
+  - it: should set matches
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      webui.gatewayApi.matches:
+        - path:
+            type: PathPrefix
+            value: /ui
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.type
+          value: PathPrefix
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /ui
+
+  # Backend refs tests
+  - it: should set backend refs with correct service and port
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      webui.service.port: 3909
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: RELEASE-NAME-garage-webui
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 3909
+      - equal:
+          path: spec.rules[0].backendRefs[0].weight
+          value: 100
+
+  # Filters tests
+  - it: should set filters
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      webui.gatewayApi.filters:
+        - type: RequestHeaderModifier
+          requestHeaderModifier:
+            add:
+              - name: x-custom-header
+                value: custom-value
+    asserts:
+      - equal:
+          path: spec.rules[0].filters[0].type
+          value: RequestHeaderModifier
+
+  # Labels tests
+  - it: should set labels
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      webui.gatewayApi.labels:
+        custom-label: value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom-label: value
+
+  - it: should include webui component label
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/component: webui
+
+  - it: should include custom common labels
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+
+  # Annotations tests
+  - it: should set annotations
+    set:
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+      webui.gatewayApi.annotations:
+        custom-annotation: value
+    asserts:
+      - equal:
+          path: metadata.annotations["custom-annotation"]
+          value: value
+
+  # Name override tests
+  - it: should use fullname override
+    set:
+      fullnameOverride: my-garage
+      webui.enabled: true
+      webui.gatewayApi.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-webui

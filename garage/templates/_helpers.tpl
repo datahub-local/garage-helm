@@ -99,6 +99,75 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Garage configuration file content
+*/}}
+{{- define "garage.config.content" -}}
+{{- if .Values.garage.garageTomlString }}
+{{- tpl (index (index .Values.garage) "garageTomlString") $ }}
+{{- else }}
+metadata_dir = "/mnt/meta"
+data_dir = "/mnt/data"
+
+db_engine = "{{ .Values.garage.dbEngine }}"
+
+block_size = {{ .Values.garage.blockSize }}
+
+replication_factor = {{ .Values.garage.replicationFactor }}
+consistency_mode = "{{ .Values.garage.consistencyMode }}"
+
+compression_level = {{ .Values.garage.compressionLevel }}
+
+{{- if .Values.garage.metadataAutoSnapshotInterval }}
+metadata_auto_snapshot_interval = {{ .Values.garage.metadataAutoSnapshotInterval | quote }}
+{{- end }}
+
+rpc_bind_addr = "{{ .Values.garage.rpc.bindAddr }}"
+
+bootstrap_peers = {{ .Values.garage.bootstrapPeers }}
+
+[kubernetes_discovery]
+namespace = "{{ .Release.Namespace }}"
+service_name = "{{ include "garage.fullname" . }}"
+skip_crd = {{ .Values.garage.kubernetesSkipCrd }}
+
+[s3_api]
+s3_region = "{{ .Values.garage.s3.api.region }}"
+api_bind_addr = "[::]:3900"
+root_domain = "{{ .Values.garage.s3.api.rootDomain }}"
+
+[s3_web]
+bind_addr = "[::]:3902"
+root_domain = "{{ .Values.garage.s3.web.rootDomain }}"
+index = "{{ .Values.garage.s3.web.index }}"
+add_host_to_metrics = true
+
+[admin]
+api_bind_addr = "[::]:3903"
+{{- if .Values.monitoring.tracing.sink }}
+trace_sink = "{{ .Values.monitoring.tracing.sink }}"
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Garage secret data content
+*/}}
+{{- define "garage.secret.content" -}}
+rpcSecret: {{ .Values.garage.secret.rpc | default (randAlphaNum 64) | b64enc | quote }}
+adminToken: {{ .Values.garage.secret.adminToken | default (randAlphaNum 64) | b64enc | quote }}
+
+{{- if (and (.Values.webui.enabled) (.Values.webui.auth.enabled)) }}
+{{- if not .Values.webui.auth.existingSecret }}
+{{- if .Values.webui.auth.userPassHash }}
+webuiAuthUserPass: {{ .Values.webui.auth.userPassHash | b64enc | quote }}
+{{- else }}
+{{- fail "webui.auth.userPassHash is required when auth is enabled. Generate it with: htpasswd -nbBC 10 'username' 'password'" }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
     Returns given number of random Hex characters.
     In practice, it generates up to 100 randAlphaNum strings
     that are filtered from non-hex characters and augmented

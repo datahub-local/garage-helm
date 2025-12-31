@@ -1,0 +1,124 @@
+suite: WebUI Service tests
+templates:
+  - webui-service.yaml
+tests:
+  # Basic WebUI Service tests - disabled by default
+  - it: should not create WebUI Service by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create WebUI Service when enabled
+    set:
+      webui.enabled: true
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-webui
+
+  # Service type tests
+  - it: should use ClusterIP by default
+    set:
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: should use NodePort when specified
+    set:
+      webui.enabled: true
+      webui.service.type: NodePort
+    asserts:
+      - equal:
+          path: spec.type
+          value: NodePort
+
+  - it: should use LoadBalancer when specified
+    set:
+      webui.enabled: true
+      webui.service.type: LoadBalancer
+    asserts:
+      - equal:
+          path: spec.type
+          value: LoadBalancer
+
+  # Port configuration
+  - it: should use default port
+    set:
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 3909
+      - equal:
+          path: spec.ports[0].name
+          value: http
+      - equal:
+          path: spec.ports[0].targetPort
+          value: http
+
+  - it: should use custom port
+    set:
+      webui.enabled: true
+      webui.service.port: 8080
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 8080
+
+  # Annotations tests
+  - it: should set service annotations
+    set:
+      webui.enabled: true
+      webui.service.annotations:
+        custom-annotation: value
+    asserts:
+      - equal:
+          path: metadata.annotations["custom-annotation"]
+          value: value
+
+  # Selector tests
+  - it: should have correct selector labels
+    set:
+      webui.enabled: true
+    asserts:
+      - isSubset:
+          path: spec.selector
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/component: webui
+
+  # Labels tests
+  - it: should include webui component label
+    set:
+      webui.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/component: webui
+
+  - it: should include custom common labels
+    set:
+      webui.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+
+  # Name override tests
+  - it: should use fullname override
+    set:
+      fullnameOverride: my-garage
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-webui

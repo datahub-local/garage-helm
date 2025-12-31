@@ -1,0 +1,232 @@
+suite: ServiceMonitor tests
+templates:
+  - servicemonitor.yaml
+tests:
+  # Basic ServiceMonitor tests - disabled by default
+  - it: should not create ServiceMonitor by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create ServiceMonitor when only metrics enabled
+    set:
+      monitoring.metrics.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create ServiceMonitor when serviceMonitor enabled
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage
+
+  # Namespace tests
+  - it: should use release namespace by default
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    release:
+      namespace: my-namespace
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: my-namespace
+
+  - it: should use custom namespace when specified
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.namespace: monitoring
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: monitoring
+
+  # Endpoint configuration tests
+  - it: should set default path
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.endpoints[0].path
+          value: /metrics
+
+  - it: should set custom path
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.path: /custom/metrics
+    asserts:
+      - equal:
+          path: spec.endpoints[0].path
+          value: /custom/metrics
+
+  - it: should set default interval
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 15s
+
+  - it: should set custom interval
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.interval: 30s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 30s
+
+  - it: should set default scrape timeout
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.endpoints[0].scrapeTimeout
+          value: 10s
+
+  - it: should set custom scrape timeout
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.scrapeTimeout: 20s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].scrapeTimeout
+          value: 20s
+
+  - it: should set default scheme
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.endpoints[0].scheme
+          value: http
+
+  - it: should set custom scheme
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.scheme: https
+    asserts:
+      - equal:
+          path: spec.endpoints[0].scheme
+          value: https
+
+  - it: should honor labels
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.endpoints[0].honorLabels
+          value: true
+
+  - it: should set port to metrics
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.endpoints[0].port
+          value: metrics
+
+  # TLS config tests
+  - it: should set tls config when specified
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.tlsConfig:
+        insecureSkipVerify: true
+    asserts:
+      - equal:
+          path: spec.endpoints[0].tlsConfig.insecureSkipVerify
+          value: true
+
+  # Relabelings tests
+  - it: should set relabelings when specified
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_node_name]
+          targetLabel: node
+    asserts:
+      - equal:
+          path: spec.endpoints[0].relabelings[0].sourceLabels[0]
+          value: __meta_kubernetes_pod_node_name
+      - equal:
+          path: spec.endpoints[0].relabelings[0].targetLabel
+          value: node
+
+  # Selector tests
+  - it: should have correct selector
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/component: garage
+
+  # Namespace selector tests
+  - it: should match release namespace
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    release:
+      namespace: my-namespace
+    asserts:
+      - contains:
+          path: spec.namespaceSelector.matchNames
+          content: my-namespace
+
+  # Job label tests
+  - it: should set job label
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: spec.jobLabel
+          value: RELEASE-NAME
+
+  # Labels tests
+  - it: should include common labels
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+
+  - it: should include custom labels
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      monitoring.metrics.serviceMonitor.labels:
+        prometheus: kube-prometheus
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            prometheus: kube-prometheus
+
+  - it: should include custom common labels
+    set:
+      monitoring.metrics.serviceMonitor.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+
+  # Name override tests
+  - it: should use fullname override
+    set:
+      fullnameOverride: my-garage
+      monitoring.metrics.serviceMonitor.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage

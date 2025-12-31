@@ -1,0 +1,220 @@
+suite: HTTPRoute tests (Gateway API)
+templates:
+  - httproute.yaml
+tests:
+  # Basic HTTPRoute tests - disabled by default
+  - it: should not create HTTPRoute by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # S3 API HTTPRoute tests
+  - it: should create S3 API HTTPRoute when enabled
+    set:
+      gatewayApi.s3.api.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HTTPRoute
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-api
+
+  - it: should set hostnames for S3 API HTTPRoute
+    set:
+      gatewayApi.s3.api.enabled: true
+      gatewayApi.s3.api.hostnames:
+        - s3.example.com
+        - "*.s3.example.com"
+    asserts:
+      - contains:
+          path: spec.hostnames
+          content: s3.example.com
+      - contains:
+          path: spec.hostnames
+          content: "*.s3.example.com"
+
+  - it: should set parent refs for S3 API HTTPRoute
+    set:
+      gatewayApi.s3.api.enabled: true
+      gatewayApi.s3.api.parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: my-gateway
+          namespace: gateway-ns
+    asserts:
+      - equal:
+          path: spec.parentRefs[0].group
+          value: gateway.networking.k8s.io
+      - equal:
+          path: spec.parentRefs[0].kind
+          value: Gateway
+      - equal:
+          path: spec.parentRefs[0].name
+          value: my-gateway
+      - equal:
+          path: spec.parentRefs[0].namespace
+          value: gateway-ns
+
+  - it: should set matches for S3 API HTTPRoute
+    set:
+      gatewayApi.s3.api.enabled: true
+      gatewayApi.s3.api.matches:
+        - path:
+            type: PathPrefix
+            value: /api
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.type
+          value: PathPrefix
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /api
+
+  - it: should set backend refs for S3 API HTTPRoute
+    set:
+      gatewayApi.s3.api.enabled: true
+      service.ports.s3Api: 3900
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: RELEASE-NAME-garage
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 3900
+      - equal:
+          path: spec.rules[0].backendRefs[0].weight
+          value: 100
+
+  - it: should set labels for S3 API HTTPRoute
+    set:
+      gatewayApi.s3.api.enabled: true
+      gatewayApi.s3.api.labels:
+        custom-label: value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom-label: value
+
+  - it: should set annotations for S3 API HTTPRoute
+    set:
+      gatewayApi.s3.api.enabled: true
+      gatewayApi.s3.api.annotations:
+        custom-annotation: value
+    asserts:
+      - equal:
+          path: metadata.annotations["custom-annotation"]
+          value: value
+
+  # S3 Web HTTPRoute tests
+  - it: should create S3 Web HTTPRoute when enabled
+    set:
+      gatewayApi.s3.web.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: HTTPRoute
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-web
+
+  - it: should set hostnames for S3 Web HTTPRoute
+    set:
+      gatewayApi.s3.web.enabled: true
+      gatewayApi.s3.web.hostnames:
+        - "*.web.example.com"
+    asserts:
+      - contains:
+          path: spec.hostnames
+          content: "*.web.example.com"
+
+  - it: should set parent refs for S3 Web HTTPRoute
+    set:
+      gatewayApi.s3.web.enabled: true
+      gatewayApi.s3.web.parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: web-gateway
+    asserts:
+      - equal:
+          path: spec.parentRefs[0].name
+          value: web-gateway
+
+  - it: should set backend refs for S3 Web HTTPRoute
+    set:
+      gatewayApi.s3.web.enabled: true
+      service.ports.s3Web: 3902
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: RELEASE-NAME-garage
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 3902
+
+  - it: should set labels for S3 Web HTTPRoute
+    set:
+      gatewayApi.s3.web.enabled: true
+      gatewayApi.s3.web.labels:
+        custom-label: value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom-label: value
+
+  - it: should set annotations for S3 Web HTTPRoute
+    set:
+      gatewayApi.s3.web.enabled: true
+      gatewayApi.s3.web.annotations:
+        custom-annotation: value
+    asserts:
+      - equal:
+          path: metadata.annotations["custom-annotation"]
+          value: value
+
+  # Both HTTPRoutes enabled tests
+  - it: should create both S3 API and Web HTTPRoutes when both enabled
+    set:
+      gatewayApi.s3.api.enabled: true
+      gatewayApi.s3.web.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-api
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-web
+        documentIndex: 1
+
+  # Labels tests
+  - it: should include common labels on S3 API HTTPRoute
+    set:
+      gatewayApi.s3.api.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+            team: platform
+
+  # Name override tests
+  - it: should use fullname override in HTTPRoute name
+    set:
+      fullnameOverride: my-garage
+      gatewayApi.s3.api.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-s3-api

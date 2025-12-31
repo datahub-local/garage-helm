@@ -1,0 +1,316 @@
+suite: Cluster Config Job tests
+templates:
+  - job-configure.yaml
+tests:
+  # Basic Job tests - disabled by default
+  - it: should not create Job by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create Job when enabled
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-configure
+
+  # Helm hook annotations
+  - it: should have helm hook annotations
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,post-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation,hook-succeeded
+
+  # ArgoCD hook annotations
+  - it: should have ArgoCD hook annotations
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: PostSync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+          value: BeforeHookCreation,HookSucceeded
+
+  # Pod configuration tests
+  - it: should set restart policy
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: OnFailure
+
+  - it: should use service account
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: RELEASE-NAME-garage
+
+  - it: should set pod security context
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.runAsGroup
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+
+  - it: should set custom pod security context
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.podSecurityContext:
+        runAsUser: 2000
+        runAsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - equal:
+          path: spec.template.spec.securityContext.runAsGroup
+          value: 2000
+
+  # Init containers tests
+  - it: should have busybox init container
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: get-busybox-tools
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].image
+          pattern: "busybox:musl"
+
+  - it: should have garage bin init container
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: get-garage-bin
+
+  - it: should use default garage image for garage bin init container
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[1].image
+          pattern: "dxflrs/amd64_garage:v2.1.0"
+
+  - it: should use custom garage image for garage bin init container
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.image.repository: custom/garage
+      clusterConfig.image.tag: v1.0.0
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].image
+          value: "custom/garage:v1.0.0"
+
+  # Main container tests
+  - it: should use busybox image for configure container
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: configure
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "busybox:latest"
+
+  - it: should set container security context
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop[0]
+          value: ALL
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: should set environment variables
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GARAGE_RPC_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-garage-secret
+                key: rpcSecret
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GARAGE_ADMIN_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-garage-secret
+                key: adminToken
+
+  # Volume mounts tests
+  - it: should mount garage-bin volume
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: garage-bin
+            mountPath: /shared
+
+  # Volumes tests
+  - it: should have tools and garage-bin volumes
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: tools
+            emptyDir: {}
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: garage-bin
+            emptyDir: {}
+
+  # Resources tests
+  - it: should not set resources by default
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - isEmpty:
+          path: spec.template.spec.containers[0].resources
+
+  - it: should set resources
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 64Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 128Mi
+
+  # Node selector, tolerations, affinity tests
+  - it: should set node selector
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: should set tolerations
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: "node-role.kubernetes.io/master"
+
+  - it: should set affinity
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: zone
+                    operator: In
+                    values:
+                      - zone-a
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: zone
+
+  # Image pull secrets tests
+  - it: should set image pull secrets
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.imagePullSecrets:
+        - name: my-registry-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: my-registry-secret
+
+  # Pod annotations tests
+  - it: should set pod annotations
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.podAnnotations:
+        custom-annotation: value
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["custom-annotation"]
+          value: value
+
+  # Labels tests
+  - it: should include common labels
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+
+  - it: should include custom common labels
+    set:
+      clusterConfig.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+
+  # Name override tests
+  - it: should use fullname override
+    set:
+      fullnameOverride: my-garage
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-configure

@@ -3,12 +3,12 @@
     "k3d@latest",
     "k9s@latest",
     "kubernetes-helm@latest",
-    "kubernetes-helmPlugins.helm-diff@latest",
     "helmfile@latest"
   ],
   "shell": {
     "init_hook": [
-      "export HELM_PLUGINS=$(dirname $(readlink -f $DEVBOX_PROJECT_ROOT/.devbox/nix/profile/default/helm-diff))"
+      "helm plugin install https://github.com/databus23/helm-diff 2> /dev/null || true",
+      "helm plugin install https://github.com/helm-unittest/helm-unittest.git 2> /dev/null || true"
     ],
     "scripts": {
       "start_k8s": [
@@ -18,7 +18,9 @@
         "./.github/ci/stop_k8s.sh"
       ],
       "test_install": "helm upgrade --install --create-namespace --namespace garage --values .github/ci/ci-values.yaml garage garage",
-      "test_delete": "kubectl delete ns garage"
+      "test_delete": "kubectl delete ns garage",
+      "test_unit": "helm unittest garage",
+      "test_unit_update": "helm unittest -u garage"
     }
   }
 }

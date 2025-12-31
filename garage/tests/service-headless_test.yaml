@@ -1,0 +1,106 @@
+suite: Headless Service tests
+templates:
+  - service-headless.yaml
+tests:
+  # Basic headless service tests
+  - it: should create headless service for StatefulSet
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-headless
+
+  - it: should not create headless service for DaemonSet
+    set:
+      deployment.kind: DaemonSet
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should be a headless service
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - equal:
+          path: spec.clusterIP
+          value: None
+
+  # Port configuration tests
+  - it: should expose all required ports
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 3900
+      - equal:
+          path: spec.ports[0].name
+          value: s3-api
+      - equal:
+          path: spec.ports[1].port
+          value: 3902
+      - equal:
+          path: spec.ports[1].name
+          value: s3-web
+      - equal:
+          path: spec.ports[2].port
+          value: 3901
+      - equal:
+          path: spec.ports[2].name
+          value: rpc
+      - equal:
+          path: spec.ports[3].port
+          value: 3903
+      - equal:
+          path: spec.ports[3].name
+          value: admin
+
+  - it: should use custom ports
+    set:
+      service.ports:
+        s3Api: 9000
+        s3Web: 9002
+        rpc: 9001
+        admin: 9003
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 9000
+      - equal:
+          path: spec.ports[1].port
+          value: 9002
+      - equal:
+          path: spec.ports[2].port
+          value: 9001
+      - equal:
+          path: spec.ports[3].port
+          value: 9003
+
+  # Selector tests
+  - it: should have correct selector labels
+    asserts:
+      - isSubset:
+          path: spec.selector
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/component: garage
+
+  # Labels tests
+  - it: should include common labels
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+
+  - it: should include custom common labels
+    set:
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform

@@ -9,7 +9,6 @@ spec:
   type: ClusterIP
   clusterIP: None
   ports:
-  ports:
     - port: {{ .Values.service.ports.s3Api }}
       targetPort: s3-api
       protocol: TCP
