@@ -60,6 +60,12 @@ If you want to install a specific version, execute the previous command adding: 
 
 Please read the [Helm Chart README.md](./garage/README.md) for details on how to configure the values needed for this chart.
 
+### Examples
+
+- `garage/examples/basic.yaml` – Persistent volumes plus the minimum cluster configuration job that seeds buckets and API keys.
+- `garage/examples/recommended.yaml` – Builds on the basics with the Web UI and nginx Ingress entries for `garage.example.com` style domains.
+- `garage/examples/advanced.yaml` – Shows a scaled layout with resource tuning, monitoring objects, and Gateway API routes for production domains.
+
 ## :memo: Contributing
 
 Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
