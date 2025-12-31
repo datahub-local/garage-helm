@@ -3,7 +3,8 @@
     "k3d@latest",
     "k9s@latest",
     "kubernetes-helm@latest",
-    "helmfile@latest"
+    "helmfile@latest",
+    "chart-testing@latest"
   ],
   "shell": {
     "init_hook": [
@@ -20,7 +21,8 @@
       "test_install": "helm upgrade --install --create-namespace --namespace garage --values .github/ci/ci-values.yaml garage garage",
       "test_delete": "kubectl delete ns garage",
       "test_unit": "helm unittest garage",
-      "test_unit_update": "helm unittest -u garage"
+      "test_unit_update": "helm unittest -u garage",
+      "lint": "ct lint --chart-dirs=. --charts=garage --validate-maintainers=false"
     }
   }
 }

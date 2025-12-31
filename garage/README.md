@@ -6,6 +6,12 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 
 **Homepage:** <https://garagehq.deuxfleurs.fr/>
 
+## Maintainers
+
+| Name | Email | Url |
+| ---- | ------ | --- |
+| alvsanand |  |  |
+
 ## Source Code
 
 * <https://git.deuxfleurs.fr/Deuxfleurs/garage.git>

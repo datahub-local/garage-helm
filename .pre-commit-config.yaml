@@ -1,9 +1,14 @@
 repos:
   - repo: https://github.com/norwoodj/helm-docs
-    rev: ""
+    rev: "v1.14.2"
     hooks:
       - id: helm-docs-container
         args:
-          # Use root folder as the main repo dir is the chart itself
           - --chart-search-root=garage
           - --template-files=README.md.gotmpl
+  - repo: local
+    hooks:
+      - id: helm-lint
+        name: chart-testing (lint)
+        entry: devbox run lint
+        language: system

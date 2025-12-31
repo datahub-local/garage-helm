@@ -279,18 +279,18 @@ resources: {}
 
 # -- Specifies a livenessProbe
 livenessProbe: {}
-  #httpGet:
-  #  path: /health
-  #  port: 3903
-  #initialDelaySeconds: 5
-  #periodSeconds: 30
+# httpGet:
+#   path: /health
+#   port: 3903
+# initialDelaySeconds: 5
+# periodSeconds: 30
 # -- Specifies a readinessProbe
 readinessProbe: {}
-  #httpGet:
-  #  path: /health
-  #  port: 3903
-  #initialDelaySeconds: 5
-  #periodSeconds: 30
+# httpGet:
+#   path: /health
+#   port: 3903
+# initialDelaySeconds: 5
+# periodSeconds: 30
 
 nodeSelector: {}
 
@@ -333,7 +333,7 @@ monitoring:
 clusterConfig:
   # -- Enable the cluster configuration job
   enabled: false
-  
+
   layout:
     # -- Enable layout configuration
     enabled: true
@@ -341,12 +341,12 @@ clusterConfig:
     zone: dc1
     # -- Capacity to assign to nodes. If empty, defaults to persistence.data.size
     capacity: ""
-    
+
   # -- List of buckets to create
   buckets: []
   # - name: my-bucket
   #   public: false
-  
+
   # -- List of keys to create
   # keyId format: must start with 'GK' followed by 24 hex-encoded characters (12 bytes)
   # secretKey format: must be 64 hex-encoded characters (32 bytes)
@@ -354,22 +354,22 @@ clusterConfig:
   # - keyId: GK12345678901234567890abcd
   #   secretKey: 123456789012345678901234567890123456789012345678901234567890abcd
   #   buckets: [] # Optional list of buckets to allow access to
-  
+
   # -- Extra commands to run
   extraCommands: []
 
   image:
     # -- Image to use for the configuration job (defaults to the same as garage)
-    repository: "" 
+    repository: ""
     tag: ""
     pullPolicy: IfNotPresent
-  
+
   # -- Image pull secrets
   imagePullSecrets: []
-  
+
   # -- Pod annotations
   podAnnotations: {}
-  
+
   # -- Pod security context
   podSecurityContext:
     runAsUser: 1000
@@ -377,23 +377,23 @@ clusterConfig:
     fsGroup: 1000
     fsGroupChangePolicy: "OnRootMismatch"
     runAsNonRoot: true
-    
+
   # -- Container security context
   securityContext:
     capabilities:
       drop:
         - ALL
     readOnlyRootFilesystem: true
-    
+
   # -- Resources for the job
   resources: {}
-  
+
   # -- Node selector
   nodeSelector: {}
-  
+
   # -- Tolerations
   tolerations: []
-  
+
   # -- Affinity
   affinity: {}
 
@@ -401,7 +401,7 @@ clusterConfig:
 webui:
   # -- Enable the garage-webui deployment
   enabled: false
-  
+
   # -- Number of WebUI replicas
   replicaCount: 1
 
@@ -550,4 +550,3 @@ webui:
 
 # -- Extra resources to deploy
 extraResources: []
-

@@ -17,4 +17,5 @@ sources:
   - https://git.deuxfleurs.fr/Deuxfleurs/garage.git
   - https://github.com/datahub-local/garage-helm/garage
 
-maintainers: []
+maintainers:
+  - name: alvsanand

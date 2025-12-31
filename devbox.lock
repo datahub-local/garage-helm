@@ -1,6 +1,54 @@
 {
   "lockfile_version": "1",
   "packages": {
+    "chart-testing@latest": {
+      "last_modified": "2025-12-16T16:49:59Z",
+      "resolved": "github:NixOS/nixpkgs/e8d16d2186d6ed9f047eb30948e97e7e01886d10#chart-testing",
+      "source": "devbox-search",
+      "version": "3.14.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/f7h8v61wc4p082p0rz88izjx3dh04y04-chart-testing-3.14.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/f7h8v61wc4p082p0rz88izjx3dh04y04-chart-testing-3.14.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/jx8x7ys33br6m5iaxjxmxwpnl7c556q6-chart-testing-3.14.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/jx8x7ys33br6m5iaxjxmxwpnl7c556q6-chart-testing-3.14.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/10r5r056zq5zwqxrmnjsfkcw0h8i3lza-chart-testing-3.14.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/10r5r056zq5zwqxrmnjsfkcw0h8i3lza-chart-testing-3.14.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/9arhq7qak4yzj5hy1zmwlr7fsxqn0v3v-chart-testing-3.14.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/9arhq7qak4yzj5hy1zmwlr7fsxqn0v3v-chart-testing-3.14.0"
+        }
+      }
+    },
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
       "last_modified": "2025-12-27T12:56:01Z",
       "resolved": "github:NixOS/nixpkgs/3edc4a30ed3903fdf6f90c837f961fa6b49582d1?lastModified=1766840161&narHash=sha256-Ss%2FLHpJJsng8vz1Pe33RSGIWUOcqM1fjrehjUkdrWio%3D"
