@@ -1,0 +1,92 @@
+# Advanced configuration with multi-node layout, monitoring, resource tuning, and Gateway API routes
+persistence:
+  enabled: true
+  data:
+    storageClass: garage-perf-hdd
+    size: 10Ti
+  meta:
+    storageClass: garage-perf-ssd
+    size: 500Gi
+
+deployment:
+  replicaCount: 4
+
+resources:
+  requests:
+    cpu: 1000m
+    memory: 4Gi
+  limits:
+    cpu: 2000m
+    memory: 8Gi
+
+clusterConfig:
+  enabled: true
+  layout:
+    enabled: true
+    zone: dc-west
+    capacity: 5Ti
+  buckets:
+    - name: analytics
+    - name: media
+      public: true
+    - name: compliance
+  keys:
+    - keyId: GKFEDCBA9876543210FEDCBA98
+      secretKey: 89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567
+      buckets:
+        - analytics
+        - media
+    - keyId: GK00112233445566778899AABB
+      secretKey: 76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98
+      buckets:
+        - compliance
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+monitoring:
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      labels:
+        release: monitoring
+  grafanaDashboard:
+    enabled: true
+  tracing:
+    sink: http://tempo.monitoring.svc.cluster.local:4317
+
+gatewayApi:
+  s3:
+    api:
+      enabled: true
+      hostnames:
+        - s3.garage.prod.example.com
+      parentRefs:
+        - name: shared-gateway
+          namespace: networking
+          sectionName: https
+    web:
+      enabled: true
+      hostnames:
+        - web.garage.prod.example.com
+      parentRefs:
+        - name: shared-gateway
+          namespace: networking
+          sectionName: https
+
+webui:
+  enabled: true
+  gatewayApi:
+    enabled: true
+    hostnames:
+      - ui.garage.prod.example.com
+    parentRefs:
+      - name: shared-gateway
+        namespace: networking
+        sectionName: https

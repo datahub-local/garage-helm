@@ -1,0 +1,25 @@
+# Base configuration with persistent volumes and initial buckets/keys
+persistence:
+  enabled: true
+  data:
+    storageClass: garage-data-hdd
+    size: 10Gi
+  meta:
+    storageClass: garage-meta-ssd
+    size: 500Mi
+
+clusterConfig:
+  enabled: true
+  layout:
+    enabled: true
+    zone: dc1
+  buckets:
+    - name: backups
+    - name: media
+      public: true
+  keys:
+    - keyId: GK0123456789ABCDEF01234567
+      secretKey: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      buckets:
+        - backups
+        - media
