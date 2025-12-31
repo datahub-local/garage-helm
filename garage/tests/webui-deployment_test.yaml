@@ -1,0 +1,419 @@
+suite: WebUI Deployment tests
+templates:
+  - webui-deployment.yaml
+tests:
+  # Basic WebUI Deployment tests - disabled by default
+  - it: should not create WebUI Deployment by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create WebUI Deployment when enabled
+    set:
+      webui.enabled: true
+    asserts:
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-webui
+
+  # Replica configuration
+  - it: should set replica count
+    set:
+      webui.enabled: true
+      webui.replicaCount: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  # Image configuration tests
+  - it: should use default webui image
+    set:
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "khairul169/garage-webui:latest"
+
+  - it: should use custom webui image
+    set:
+      webui.enabled: true
+      webui.image.repository: custom/webui
+      webui.image.tag: v1.0.0
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "custom/webui:v1.0.0"
+
+  - it: should set image pull policy
+    set:
+      webui.enabled: true
+      webui.image.pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: should set image pull secrets
+    set:
+      webui.enabled: true
+      webui.imagePullSecrets:
+        - name: my-registry-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: my-registry-secret
+
+  # Service Account tests
+  - it: should use default service account name
+    set:
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: RELEASE-NAME-garage
+
+  # Security Context tests
+  - it: should set pod security context
+    set:
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.runAsGroup
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 1000
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+
+  - it: should set container security context
+    set:
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop[0]
+          value: ALL
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: should allow custom pod security context
+    set:
+      webui.enabled: true
+      webui.podSecurityContext:
+        runAsUser: 2000
+        runAsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - equal:
+          path: spec.template.spec.securityContext.runAsGroup
+          value: 2000
+
+  # Environment variables tests
+  - it: should set API_BASE_URL environment variable
+    set:
+      webui.enabled: true
+      service.ports.admin: 3903
+    release:
+      namespace: test-ns
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_BASE_URL
+            value: "http://RELEASE-NAME-garage.test-ns.svc.cluster.local:3903"
+
+  - it: should set S3_ENDPOINT_URL environment variable
+    set:
+      webui.enabled: true
+      service.ports.s3Api: 3900
+    release:
+      namespace: test-ns
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: S3_ENDPOINT_URL
+            value: "http://RELEASE-NAME-garage.test-ns.svc.cluster.local:3900"
+
+  - it: should set API_ADMIN_KEY from secret
+    set:
+      webui.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_ADMIN_KEY
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-garage-secret
+                key: adminToken
+
+  - it: should set AUTH_USER_PASS when auth enabled
+    set:
+      webui.enabled: true
+      webui.auth.enabled: true
+      webui.auth.userPassHash: "admin:hash"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: AUTH_USER_PASS
+            valueFrom:
+              secretKeyRef:
+                name: RELEASE-NAME-garage-secret
+                key: webuiAuthUserPass
+
+  - it: should use existing secret for auth when specified
+    set:
+      webui.enabled: true
+      webui.auth.enabled: true
+      webui.auth.existingSecret: external-auth-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: AUTH_USER_PASS
+            valueFrom:
+              secretKeyRef:
+                name: external-auth-secret
+                key: webuiAuthUserPass
+
+  - it: should not set AUTH_USER_PASS when auth disabled
+    set:
+      webui.enabled: true
+      webui.auth.enabled: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: AUTH_USER_PASS
+
+  # Port configuration
+  - it: should expose http port
+    set:
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].name
+          value: http
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 3909
+
+  # Volume mounts tests
+  - it: should mount configmap volume
+    set:
+      webui.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: configmap
+            mountPath: /etc/garage.toml
+            subPath: garage.toml
+
+  - it: should add extra volume mounts
+    set:
+      webui.enabled: true
+      webui.extraVolumeMounts:
+        - name: extra-mount
+          mountPath: /extra
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: extra-mount
+            mountPath: /extra
+
+  # Volumes tests
+  - it: should create configmap volume
+    set:
+      webui.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: configmap
+            configMap:
+              name: RELEASE-NAME-garage-config
+
+  - it: should add extra volumes
+    set:
+      webui.enabled: true
+      webui.extraVolumes:
+        - name: extra-volume
+          emptyDir: {}
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: extra-volume
+            emptyDir: {}
+
+  # Resource limits tests
+  - it: should not set resources by default
+    set:
+      webui.enabled: true
+    asserts:
+      - isEmpty:
+          path: spec.template.spec.containers[0].resources
+
+  - it: should set resource limits and requests
+    set:
+      webui.enabled: true
+      webui.resources:
+        limits:
+          cpu: 100m
+          memory: 256Mi
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 100m
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+
+  # Probes tests
+  - it: should not set probes by default
+    set:
+      webui.enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe
+
+  - it: should set liveness probe
+    set:
+      webui.enabled: true
+      webui.livenessProbe:
+        httpGet:
+          path: /
+          port: 3909
+        initialDelaySeconds: 10
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 10
+
+  - it: should set readiness probe
+    set:
+      webui.enabled: true
+      webui.readinessProbe:
+        httpGet:
+          path: /
+          port: 3909
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /
+
+  # Node selector, tolerations, affinity tests
+  - it: should set node selector
+    set:
+      webui.enabled: true
+      webui.nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+
+  - it: should set tolerations
+    set:
+      webui.enabled: true
+      webui.tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: "node-role.kubernetes.io/master"
+
+  - it: should set affinity
+    set:
+      webui.enabled: true
+      webui.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: zone
+                    operator: In
+                    values:
+                      - zone-a
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: zone
+
+  # Labels and annotations tests
+  - it: should include webui component label
+    set:
+      webui.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/component: webui
+
+  - it: should set pod annotations
+    set:
+      webui.enabled: true
+      webui.podAnnotations:
+        custom-annotation: value
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.annotations
+          content:
+            custom-annotation: value
+
+  - it: should include custom common labels
+    set:
+      webui.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+
+  # Name override tests
+  - it: should use fullname override
+    set:
+      fullnameOverride: my-garage
+      webui.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-webui
+
+  # Selector tests
+  - it: should have correct selector labels
+    set:
+      webui.enabled: true
+    asserts:
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/component: webui

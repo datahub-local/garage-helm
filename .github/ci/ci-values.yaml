@@ -1,0 +1,37 @@
+garage:
+  # Use only 2 replicas per object
+  replicationFactor: 2
+
+# Start 4 instances (StatefulSets) of garage
+deployment:
+  replicaCount: 4
+
+# Override default storage class and size
+persistence:
+  meta:
+    storageClass: "local-path"
+    size: 100Mi
+  data:
+    storageClass: "local-path"
+    size: 250Mi
+
+clusterConfig:
+  enabled: true
+  buckets:
+  - name: my-bucket
+    public: false
+  - name: my-public-bucket
+    public: true
+  keys:
+  - keyId: GK12345678901234567890abcd
+    secretKey: 123456789012345678901234567890123456789012345678901234567890abcd
+    buckets:
+    - my-bucket
+    - my-public-bucket
+
+webui:
+  enabled: true
+
+  auth:
+    enabled: true
+    userPassHash: "admin:$2y$10$wjnUPtyPiODuT7f1t5rs5O.HYYpM0EeP0D7EXoeHKfBwPX7rUSaTG" # htpasswd -nbBC 10 "admin" "admin1234"

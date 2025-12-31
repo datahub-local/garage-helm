@@ -1,0 +1,78 @@
+suite: Grafana Dashboard tests
+templates:
+  - grafana-dashboard.yaml
+tests:
+  # Basic Grafana Dashboard tests - disabled by default
+  - it: should not create Grafana Dashboard ConfigMap by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create Grafana Dashboard ConfigMap when enabled
+    set:
+      monitoring.grafanaDashboard.enabled: true
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-grafana-dashboard
+
+  # Labels tests
+  - it: should have grafana_dashboard label
+    set:
+      monitoring.grafanaDashboard.enabled: true
+    asserts:
+      - equal:
+          path: metadata.labels.grafana_dashboard
+          value: "1"
+
+  - it: should include common labels
+    set:
+      monitoring.grafanaDashboard.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+
+  - it: should include custom common labels
+    set:
+      monitoring.grafanaDashboard.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+
+  # Annotations tests
+  - it: should set annotations
+    set:
+      monitoring.grafanaDashboard.enabled: true
+      monitoring.grafanaDashboard.annotations:
+        grafana-folder: "Infrastructure"
+    asserts:
+      - equal:
+          path: metadata.annotations["grafana-folder"]
+          value: "Infrastructure"
+
+  # Data tests
+  - it: should have garage.json key in data
+    set:
+      monitoring.grafanaDashboard.enabled: true
+    asserts:
+      - exists:
+          path: data["garage.json"]
+
+  # Name override tests
+  - it: should use fullname override
+    set:
+      fullnameOverride: my-garage
+      monitoring.grafanaDashboard.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-grafana-dashboard

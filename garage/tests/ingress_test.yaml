@@ -1,0 +1,249 @@
+suite: Ingress tests
+templates:
+  - ingress.yaml
+capabilities:
+  kubeVersion: 1.25.0
+tests:
+  # Basic Ingress tests - disabled by default
+  - it: should not create Ingress by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # S3 API Ingress tests
+  - it: should create S3 API Ingress when enabled
+    set:
+      ingress.s3.api.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-api
+
+  - it: should set ingress class name for S3 API
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.api.className: nginx
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  - it: should set annotations for S3 API Ingress
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.api.annotations:
+        kubernetes.io/tls-acme: "true"
+        nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    asserts:
+      - equal:
+          path: metadata.annotations["kubernetes.io/tls-acme"]
+          value: "true"
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-body-size"]
+          value: "100m"
+
+  - it: should set labels for S3 API Ingress
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.api.labels:
+        custom-label: value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom-label: value
+
+  - it: should configure hosts for S3 API Ingress
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.api.hosts:
+        - host: s3.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: s3.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+
+  - it: should configure multiple hosts for S3 API Ingress
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.api.hosts:
+        - host: s3.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+        - host: "*.s3.example.com"
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: s3.example.com
+      - equal:
+          path: spec.rules[1].host
+          value: "*.s3.example.com"
+
+  - it: should configure TLS for S3 API Ingress
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.api.tls:
+        - secretName: s3-tls-secret
+          hosts:
+            - s3.example.com
+            - "*.s3.example.com"
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: s3-tls-secret
+      - contains:
+          path: spec.tls[0].hosts
+          content: s3.example.com
+      - contains:
+          path: spec.tls[0].hosts
+          content: "*.s3.example.com"
+
+  - it: should use correct service name and port for S3 API backend
+    set:
+      ingress.s3.api.enabled: true
+      service.ports.s3Api: 3900
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: RELEASE-NAME-garage
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 3900
+
+  # S3 Web Ingress tests
+  - it: should create S3 Web Ingress when enabled
+    set:
+      ingress.s3.web.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-web
+
+  - it: should set ingress class name for S3 Web
+    set:
+      ingress.s3.web.enabled: true
+      ingress.s3.web.className: nginx
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  - it: should set annotations for S3 Web Ingress
+    set:
+      ingress.s3.web.enabled: true
+      ingress.s3.web.annotations:
+        kubernetes.io/tls-acme: "true"
+    asserts:
+      - equal:
+          path: metadata.annotations["kubernetes.io/tls-acme"]
+          value: "true"
+
+  - it: should set labels for S3 Web Ingress
+    set:
+      ingress.s3.web.enabled: true
+      ingress.s3.web.labels:
+        custom-label: value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom-label: value
+
+  - it: should configure hosts for S3 Web Ingress
+    set:
+      ingress.s3.web.enabled: true
+      ingress.s3.web.hosts:
+        - host: "*.web.example.com"
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "*.web.example.com"
+
+  - it: should configure TLS for S3 Web Ingress
+    set:
+      ingress.s3.web.enabled: true
+      ingress.s3.web.tls:
+        - secretName: web-tls-secret
+          hosts:
+            - "*.web.example.com"
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: web-tls-secret
+
+  - it: should use correct service name and port for S3 Web backend
+    set:
+      ingress.s3.web.enabled: true
+      service.ports.s3Web: 3902
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: RELEASE-NAME-garage
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 3902
+
+  # Both Ingresses enabled tests
+  - it: should create both S3 API and Web Ingresses when both enabled
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.web.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-api
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-s3-web
+        documentIndex: 1
+
+  # Labels tests
+  - it: should include common labels on S3 API Ingress
+    set:
+      ingress.s3.api.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+            team: platform
+
+  # Name override tests
+  - it: should use fullname override in Ingress name
+    set:
+      fullnameOverride: my-garage
+      ingress.s3.api.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-s3-api

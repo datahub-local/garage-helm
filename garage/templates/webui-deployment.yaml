@@ -1,0 +1,94 @@
+{{- if .Values.webui.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "garage.fullname" . }}-webui
+  labels:
+    {{- include "garage.webui.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.webui.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "garage.webui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include "garage.config.content" . | sha256sum }}
+        checksum/secret: {{ include "garage.secret.content" . | sha256sum }}
+      {{- with .Values.webui.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "garage.webui.labels" . | nindent 8 }}
+    spec:
+      {{- with .Values.webui.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "garage.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.webui.podSecurityContext | nindent 8 }}
+      containers:
+        - name: webui
+          securityContext:
+            {{- toYaml .Values.webui.securityContext | nindent 12 }}
+          image: "{{ .Values.webui.image.repository }}:{{ .Values.webui.image.tag }}"
+          imagePullPolicy: {{ .Values.webui.image.pullPolicy }}
+          env:
+            - name: API_BASE_URL
+              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.ports.admin }}"
+            - name: S3_ENDPOINT_URL
+              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.ports.s3Api }}"
+            - name: API_ADMIN_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "garage.secretName" . }}
+                  key: adminToken
+            {{- if .Values.webui.auth.enabled }}
+            - name: AUTH_USER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.webui.auth.existingSecret | default (include "garage.secretName" .) }}
+                  key: webuiAuthUserPass
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 3909
+              protocol: TCP
+          {{- with .Values.webui.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.webui.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.webui.resources | nindent 12 }}
+          volumeMounts:
+            - name: configmap
+              mountPath: /etc/garage.toml
+              subPath: garage.toml
+          {{- with .Values.webui.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: configmap
+          configMap:
+            name: {{ include "garage.fullname" . }}-config
+      {{- with .Values.webui.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webui.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webui.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.webui.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

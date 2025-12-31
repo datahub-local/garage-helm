@@ -1,0 +1,269 @@
+suite: ConfigMap tests
+templates:
+  - configmap.yaml
+tests:
+  # Basic ConfigMap tests
+  - it: should create a ConfigMap by default
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-config
+
+  - it: should not create ConfigMap when existingConfigMap is set
+    set:
+      garage.existingConfigMap: existing-config
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # Default configuration values
+  - it: should set default db engine
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'db_engine = "lmdb"'
+
+  - it: should set default block size
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "block_size = 1048576"
+
+  - it: should set default replication factor
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "replication_factor = 3"
+
+  - it: should set default consistency mode
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'consistency_mode = "consistent"'
+
+  - it: should set default compression level
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "compression_level = 1"
+
+  - it: should set default metadata and data dirs
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'metadata_dir = "/mnt/meta"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'data_dir = "/mnt/data"'
+
+  - it: should set default RPC bind address
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'rpc_bind_addr'
+
+  - it: should set empty bootstrap peers by default
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "bootstrap_peers = .*"
+
+  # Custom configuration values
+  - it: should use custom db engine
+    set:
+      garage.dbEngine: sqlite
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'db_engine = "sqlite"'
+
+  - it: should use custom block size
+    set:
+      garage.blockSize: "2097152"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "block_size = 2097152"
+
+  - it: should use custom replication factor
+    set:
+      garage.replicationFactor: "1"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "replication_factor = 1"
+
+  - it: should use custom consistency mode
+    set:
+      garage.consistencyMode: eventual
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'consistency_mode = "eventual"'
+
+  - it: should use custom compression level
+    set:
+      garage.compressionLevel: "3"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "compression_level = 3"
+
+  - it: should set metadata auto snapshot interval when provided
+    set:
+      garage.metadataAutoSnapshotInterval: "1h"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'metadata_auto_snapshot_interval = "1h"'
+
+  - it: should not set metadata auto snapshot interval when empty
+    asserts:
+      - notMatchRegex:
+          path: data["garage.toml"]
+          pattern: "metadata_auto_snapshot_interval"
+
+  - it: should set custom RPC bind address
+    set:
+      garage.rpc.bindAddr: "0.0.0.0:3901"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'rpc_bind_addr = "0.0.0.0:3901"'
+
+  # Kubernetes discovery configuration
+  - it: should configure kubernetes discovery
+    release:
+      namespace: test-namespace
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: '.*kubernetes_discovery.*'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'namespace = "test-namespace"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'skip_crd = false'
+
+  - it: should skip CRD when configured
+    set:
+      garage.kubernetesSkipCrd: true
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'skip_crd = true'
+
+  # S3 API configuration
+  - it: should configure S3 API
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: '.*s3_api.*'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 's3_region = "garage"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'api_bind_addr = ".*:3900"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'root_domain = ".s3.garage.tld"'
+
+  - it: should use custom S3 API region
+    set:
+      garage.s3.api.region: us-west-2
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 's3_region = "us-west-2"'
+
+  - it: should use custom S3 API root domain
+    set:
+      garage.s3.api.rootDomain: ".s3.example.com"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'root_domain = ".s3.example.com"'
+
+  # S3 Web configuration
+  - it: should configure S3 Web
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: '.*s3_web.*'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'bind_addr = ".*:3902"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'root_domain = ".web.garage.tld"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'index = "index.html"'
+
+  - it: should use custom S3 Web root domain
+    set:
+      garage.s3.web.rootDomain: ".web.example.com"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'root_domain = ".web.example.com"'
+
+  - it: should use custom index file
+    set:
+      garage.s3.web.index: home.html
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'index = "home.html"'
+
+  # Admin configuration
+  - it: should configure admin API
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: '.*admin.*'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'api_bind_addr = ".*:3903"'
+
+  - it: should set trace sink when monitoring is configured
+    set:
+      monitoring.tracing.sink: "http://localhost:4317"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'trace_sink = "http://localhost:4317"'
+
+  - it: should not set trace sink when not configured
+    asserts:
+      - notMatchRegex:
+          path: data["garage.toml"]
+          pattern: "trace_sink"
+
+  # Custom garage.toml string
+  - it: should use custom garageTomlString when provided
+    set:
+      garage.garageTomlString: |
+        metadata_dir = "/custom/meta"
+        data_dir = "/custom/data"
+        db_engine = "custom"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'metadata_dir = "/custom/meta"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'data_dir = "/custom/data"'
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'db_engine = "custom"'
+
+  # Labels tests
+  - it: should not have labels by default
+    asserts:
+      - notExists:
+          path: metadata.labels

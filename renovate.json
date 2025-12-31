@@ -1,0 +1,48 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommits"
+  ],
+  "schedule": [
+    "* * * * 6"
+  ],
+  "automerge": false,
+  "prCreation": "immediate",
+  "automergeStrategy": "squash",
+  "forkProcessing": "enabled",
+  "includePaths": [
+    "garage/**"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch"
+      ],
+      "groupName": "all Helm dependencies",
+      "groupSlug": "all",
+      "bumpVersions": [
+        {
+          "filePatterns": [
+            "garage/Chart.{yaml,yml}"
+          ],
+          "matchStrings": [
+            "version:\\s(?<version>[^\\s]+)"
+          ],
+          "bumpType": "{{#if isPatch}}patch{{else}}minor{{/if}}"
+        },
+        {
+          "filePatterns": [
+            "garage/Chart.{yaml,yml}"
+          ],
+          "matchStrings": [
+            "appVersion:\\s(?<version>[^\\s]+)"
+          ],
+          "bumpType": "{{#if isPatch}}patch{{else}}minor{{/if}}"
+        }
+      ]
+    }
+  ]
+}

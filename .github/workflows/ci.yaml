@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4.1.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: 3.13
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.7.0
+
+      - name: Fetch cached dependencies charts
+        id: cache-charts
+        uses: actions/cache/restore@v4
+        with:
+          path: garage/charts
+          key: dep-charts-${{ hashFiles('garage/Chart.yaml') }}
+
+      - name: Run chart-testing (lint)
+        env:
+          CACHE_HIT: ${{ steps.cache-charts.outputs.cache-hit == 'true' }}
+        run: |
+          extraArgs=""
+          if [[ "$CACHE_HIT" == "true" ]] ; then
+            extraArgs="--skip-helm-dependencies"
+          fi
+          ct lint --chart-dirs=. --charts=garage --validate-maintainers=false $extraArgs
+
+      - name: Save dependencies charts in the cache
+        if: ${{ steps.cache-charts.outputs.cache-hit != 'true' }}
+        id: cache-charts-save
+        uses: actions/cache/save@v4
+        with:
+          path: garage/charts
+          key: dep-charts-${{ hashFiles('garage/Chart.yaml') }}
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4.1.0
+
+      - name: Install helm-unittest plugin
+        run: helm plugin install --verify=false https://github.com/helm-unittest/helm-unittest.git
+
+      - name: Run Unit Tests
+        run: helm unittest garage
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4.1.0
+
+      - name: Fetch cached dependencies charts
+        id: cache-charts
+        uses: actions/cache/restore@v4
+        with:
+          path: garage/charts
+          key: dep-charts-${{ hashFiles('garage/Chart.yaml') }}
+
+      - name: Helm Dependency update
+        if: ${{ steps.cache-charts.outputs.cache-hit != 'true' }}
+        run: helm dependency update garage/ --debug
+
+      - name: Helm Template
+        run: helm template garage garage/ --debug -f .github/ci/ci-values.yaml
+
+      - name: Create Package
+        run: helm package garage/
+
+  docs:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout to current commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Run helm-docs and push to the same branch
+        uses: losisin/helm-docs-github-action@v1
+        with:
+          git-push: true
+          git-push-user-name: "garage Bot 🤖"
+          git-push-user-email: "garage-bot@datahub.local"
+          chart-search-root: ./garage

@@ -1,0 +1,16 @@
+{{ if .Values.monitoring.grafanaDashboard.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "garage.fullname" . }}-grafana-dashboard
+  labels:
+    grafana_dashboard: "1"
+    {{- include "garage.labels" . | nindent 4 -}}
+  {{- with .Values.monitoring.grafanaDashboard.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 -}}
+  {{- end }}
+data:
+  garage.json: |-
+    {{- .Files.Get "files/grafana-dashboard.json" | nindent 4 }}
+{{ end }}

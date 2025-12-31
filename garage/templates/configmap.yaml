@@ -1,0 +1,9 @@
+{{- if not .Values.garage.existingConfigMap }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "garage.fullname" . }}-config
+data:
+  garage.toml: |-
+{{ include "garage.config.content" . | indent 4 }}
+{{- end }}

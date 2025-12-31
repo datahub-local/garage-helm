@@ -1,0 +1,30 @@
+{{- if eq .Values.deployment.kind "StatefulSet" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "garage.fullname" . }}-headless
+  labels:
+    {{- include "garage.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: {{ .Values.service.ports.s3Api }}
+      targetPort: s3-api
+      protocol: TCP
+      name: s3-api
+    - port: {{ .Values.service.ports.s3Web }}
+      targetPort: s3-web
+      protocol: TCP
+      name: s3-web
+    - port: {{ .Values.service.ports.rpc }}
+      targetPort: rpc
+      protocol: TCP
+      name: rpc
+    - port: {{ .Values.service.ports.admin }}
+      targetPort: admin
+      protocol: TCP
+      name: admin
+  selector:
+    {{- include "garage.selectorLabels" . | nindent 4 }}
+{{- end }}

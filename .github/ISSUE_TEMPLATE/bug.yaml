@@ -1,0 +1,61 @@
+name: "🐛 Bug Report"
+description: Create a new ticket for a bug.
+labels: ["bug", "needs triage"]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please enter an explicit description of your issue
+      placeholder: Short and explicit description of your incident.
+    validations:
+      required: true
+  - type: textarea
+    id: stepstoreproduce
+    attributes:
+      label: Steps to reproduce
+      description: Please describe which are the steps to reproduce the error
+      placeholder: Step list to reproduce the error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected behavior"
+      description: Please describe which is the expected behavior
+      placeholder: Short and explicit description of the expected behavior
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: garage Helm Chart version
+      description: Which garage Helm Chart version are you using?
+      placeholder: ex. 1.0
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: values
+    attributes:
+      label: Chart values
+      description: Please copy and paste your Helm Chart values. Please, remove any sensitive data from it before submitting the issue. This will be automatically formatted into code, so no need for backticks.
+      render: yaml
+    validations:
+      required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/datahub-local/garage-helm/CONTRIBUTING.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

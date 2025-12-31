@@ -1,0 +1,175 @@
+suite: WebUI Ingress tests
+templates:
+  - webui-ingress.yaml
+capabilities:
+  kubeVersion: 1.25.0
+tests:
+  # Basic WebUI Ingress tests - disabled by default
+  - it: should not create WebUI Ingress by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not create WebUI Ingress when only webui enabled
+    set:
+      webui.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should create WebUI Ingress when both webui and ingress enabled
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-garage-webui
+
+  # Ingress class tests
+  - it: should set ingress class name
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      webui.ingress.className: nginx
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: nginx
+
+  # Annotations tests
+  - it: should set annotations
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      webui.ingress.annotations:
+        kubernetes.io/tls-acme: "true"
+        nginx.ingress.kubernetes.io/auth-type: basic
+    asserts:
+      - equal:
+          path: metadata.annotations["kubernetes.io/tls-acme"]
+          value: "true"
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/auth-type"]
+          value: basic
+
+  # Labels tests
+  - it: should set labels
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      webui.ingress.labels:
+        custom-label: value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            custom-label: value
+
+  - it: should include webui component label
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/component: webui
+
+  - it: should include custom common labels
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      commonLabels:
+        team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+
+  # Host configuration tests
+  - it: should configure hosts
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      webui.ingress.hosts:
+        - host: webui.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: webui.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+
+  - it: should configure multiple hosts
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      webui.ingress.hosts:
+        - host: webui.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+        - host: garage-ui.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: webui.example.com
+      - equal:
+          path: spec.rules[1].host
+          value: garage-ui.example.com
+
+  # TLS configuration tests
+  - it: should configure TLS
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      webui.ingress.tls:
+        - secretName: webui-tls-secret
+          hosts:
+            - webui.example.com
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: webui-tls-secret
+      - contains:
+          path: spec.tls[0].hosts
+          content: webui.example.com
+
+  # Backend configuration tests
+  - it: should use correct service name and port for backend
+    set:
+      webui.enabled: true
+      webui.ingress.enabled: true
+      webui.service.port: 3909
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: RELEASE-NAME-garage-webui
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 3909
+
+  # Name override tests
+  - it: should use fullname override
+    set:
+      fullnameOverride: my-garage
+      webui.enabled: true
+      webui.ingress.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-garage-webui
