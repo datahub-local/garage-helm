@@ -1,6 +1,6 @@
 # garage
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
+![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
 
 S3-compatible object store for small self-hosted geo-distributed deployments.
 
@@ -154,7 +154,7 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | webui.gatewayApi.parentRefs | list | `[]` | Gateway reference that the HTTPRoute should bind against |
 | webui.image.pullPolicy | string | `"IfNotPresent"` | image pull policy |
 | webui.image.repository | string | `"khairul169/garage-webui"` | garage-webui image repository |
-| webui.image.tag | string | `"latest"` | garage-webui image tag |
+| webui.image.tag | string | `"1.1.0"` | garage-webui image tag |
 | webui.imagePullSecrets | list | `[]` | image pull secrets for private registries |
 | webui.ingress | object | `{"annotations":{},"className":"","enabled":false,"hosts":[{"host":"garage-webui.tld","paths":[{"path":"/","pathType":"Prefix"}]}],"labels":{},"tls":[]}` | Ingress configuration for WebUI |
 | webui.ingress.annotations | object | `{}` | Ingress annotations |
