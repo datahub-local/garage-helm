@@ -409,7 +409,7 @@ webui:
     # -- garage-webui image repository
     repository: khairul169/garage-webui
     # -- garage-webui image tag
-    tag: latest
+    tag: "1.1.0"
     # -- image pull policy
     pullPolicy: IfNotPresent
 

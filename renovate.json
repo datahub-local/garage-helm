@@ -11,38 +11,20 @@
   "prCreation": "immediate",
   "automergeStrategy": "squash",
   "forkProcessing": "enabled",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)garage/Chart\\.yaml$"
+      ],
+      "matchStrings": [
+        "appVersion: \"(?<currentValue>.*?)\""
+      ],
+      "depNameTemplate": "dxflrs/amd64_garage",
+      "datasourceTemplate": "docker"
+    }
+  ],
   "includePaths": [
     "garage/**"
-  ],
-  "packageRules": [
-    {
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch"
-      ],
-      "groupName": "all Helm dependencies",
-      "groupSlug": "all",
-      "bumpVersions": [
-        {
-          "filePatterns": [
-            "garage/Chart.{yaml,yml}"
-          ],
-          "matchStrings": [
-            "version:\\s(?<version>[^\\s]+)"
-          ],
-          "bumpType": "{{#if isPatch}}patch{{else}}minor{{/if}}"
-        },
-        {
-          "filePatterns": [
-            "garage/Chart.{yaml,yml}"
-          ],
-          "matchStrings": [
-            "appVersion:\\s(?<version>[^\\s]+)"
-          ],
-          "bumpType": "{{#if isPatch}}patch{{else}}minor{{/if}}"
-        }
-      ]
-    }
   ]
 }

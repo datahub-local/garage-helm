@@ -4,7 +4,8 @@
     "k9s@latest",
     "kubernetes-helm@latest",
     "helmfile@latest",
-    "chart-testing@latest"
+    "chart-testing@latest",
+    "renovate@latest"
   ],
   "shell": {
     "init_hook": [
@@ -22,7 +23,8 @@
       "test_delete": "kubectl delete ns garage",
       "test_unit": "helm unittest garage",
       "test_unit_update": "helm unittest -u garage",
-      "lint": "ct lint --chart-dirs=. --charts=garage --validate-maintainers=false"
+      "lint": "ct lint --chart-dirs=. --charts=garage --validate-maintainers=false",
+      "test_renovate": "LOG_LEVEL=debug renovate --platform=local --dry-run=full"
     }
   }
 }
