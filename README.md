@@ -38,7 +38,7 @@ To deploy the Helm Chart:
 1. Add the Helm repository:
 
 ```shell
-$ helm repo add /garage-helm https://datahub-local.github.io/garage-helm
+$ helm repo add garage-helm https://datahub-local.github.io/garage-helm
 ```
 
 2. Install the release:
