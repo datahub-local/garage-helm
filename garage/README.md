@@ -17,6 +17,12 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 * <https://git.deuxfleurs.fr/Deuxfleurs/garage.git>
 * <https://github.com/datahub-local/garage-helm/garage>
 
+## Examples
+
+- `garage/examples/basic.yaml` – Persistent volumes plus the minimum cluster configuration job that seeds buckets and API keys.
+- `garage/examples/recommended.yaml` – Builds on the basics with the Web UI and nginx Ingress entries for `garage.example.com` style domains.
+- `garage/examples/advanced.yaml` – Shows a scaled layout with resource tuning, monitoring objects, and Gateway API routes for production domains.
+
 ## Values
 
 | Key | Type | Default | Description |

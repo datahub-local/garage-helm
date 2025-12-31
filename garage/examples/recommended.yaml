@@ -1,0 +1,69 @@
+# Recommended configuration enabling Web UI access behind Ingress
+persistence:
+  enabled: true
+  data:
+    storageClass: garage-data-hdd
+    size: 10Gi
+  meta:
+    storageClass: garage-meta-ssd
+    size: 500Mi
+
+clusterConfig:
+  enabled: true
+  layout:
+    enabled: true
+    zone: dc1
+  buckets:
+    - name: media
+      public: true
+    - name: backups
+    - name: staging
+  keys:
+    - keyId: GK89ABCDEF0123456789ABCDEF
+      secretKey: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+      buckets:
+        - media
+        - backups
+        - staging
+
+ingress:
+  s3:
+    api:
+      enabled: true
+      className: nginx
+      hosts:
+        - host: s3.garage.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: s3-garage-tls
+          hosts:
+            - s3.garage.example.com
+    web:
+      enabled: true
+      className: nginx
+      hosts:
+        - host: web.garage.example.com
+          paths:
+            - path: /
+              pathType: Prefix
+      tls:
+        - secretName: web-garage-tls
+          hosts:
+            - web.garage.example.com
+
+webui:
+  enabled: true
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: garage-ui.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: garage-ui-tls
+        hosts:
+          - garage-ui.example.com
