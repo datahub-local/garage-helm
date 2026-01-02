@@ -156,6 +156,7 @@ ingress:
       # className: "nginx"
       # and replace "nginx" by an Ingress controller name,
       # examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers).
+      className: ""
       annotations: {}
         # kubernetes.io/ingress.class: "nginx"
         # kubernetes.io/tls-acme: "true"
@@ -182,6 +183,7 @@ ingress:
       # className: "nginx"
       # and replace "nginx" by an Ingress controller name,
       # examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers).
+      className: ""
       annotations: {}
         # kubernetes.io/ingress.class: nginx
         # kubernetes.io/tls-acme: "true"
@@ -315,6 +317,7 @@ monitoring:
       enabled: false
       path: /metrics
       #  namespace: monitoring  (defaults to use the namespace this chart is deployed to)
+      namespace: ""
       labels: {}
       interval: 15s
       scheme: http

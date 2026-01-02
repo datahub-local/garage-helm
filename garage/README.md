@@ -17,6 +17,12 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 * <https://git.deuxfleurs.fr/Deuxfleurs/garage.git>
 * <https://github.com/datahub-local/garage-helm/garage>
 
+## Examples
+
+- `garage/examples/basic.yaml` – Persistent storage, fixed Garage secrets, and initial buckets/keys for a homelab root domain.
+- `garage/examples/recommended.yaml` – Adds custom Garage domains, static secrets, Web UI, and nginx Ingress entries for `garage.example.com`-style clusters.
+- `garage/examples/advanced.yaml` – Scales replication, tunes resources, enables monitoring, and exposes Gateway API routes with production domains.
+
 ## Values
 
 | Key | Type | Default | Description |

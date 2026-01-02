@@ -153,7 +153,7 @@ trace_sink = "{{ .Values.monitoring.tracing.sink }}"
 Garage secret data content
 */}}
 {{- define "garage.secret.content" -}}
-rpcSecret: {{ .Values.garage.secret.rpc | default (randAlphaNum 64) | b64enc | quote }}
+rpcSecret: {{ .Values.garage.secret.rpcSecret | default (randAlphaNum 64) | b64enc | quote }}
 adminToken: {{ .Values.garage.secret.adminToken | default (randAlphaNum 64) | b64enc | quote }}
 
 {{- if (and (.Values.webui.enabled) (.Values.webui.auth.enabled)) }}
