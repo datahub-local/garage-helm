@@ -1,6 +1,6 @@
 # garage
 
-![Version: 0.1.1](https://img.shields.io/badge/Version-0.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
+![Version: 0.1.2](https://img.shields.io/badge/Version-0.1.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
 
 S3-compatible object store for small self-hosted geo-distributed deployments.
 
@@ -16,12 +16,6 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 
 * <https://git.deuxfleurs.fr/Deuxfleurs/garage.git>
 * <https://github.com/datahub-local/garage-helm/garage>
-
-## Examples
-
-- `garage/examples/basic.yaml` – Persistent storage, fixed Garage secrets, and initial buckets/keys for a homelab root domain.
-- `garage/examples/recommended.yaml` – Adds custom Garage domains, static secrets, Web UI, and nginx Ingress entries for `garage.example.com`-style clusters.
-- `garage/examples/advanced.yaml` – Scales replication, tunes resources, enables monitoring, and exposes Gateway API routes with production domains.
 
 ## Values
 
@@ -96,20 +90,22 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | image.repository | string | `"dxflrs/amd64_garage"` | default to amd64 docker image |
 | image.tag | string | `""` | set the image tag, please prefer using the chart version and not this to avoid compatibility issues |
 | imagePullSecrets | list | `[]` | set if you need credentials to pull your custom image |
-| ingress.s3.api.annotations | object | `{}` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
+| ingress.s3.api.annotations | object | `{}` |  |
+| ingress.s3.api.className | string | `""` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
 | ingress.s3.api.enabled | bool | `false` |  |
 | ingress.s3.api.hosts[0] | object | `{"host":"s3.garage.tld","paths":[{"path":"/","pathType":"Prefix"}]}` | garage S3 API endpoint, to be used with awscli for example |
 | ingress.s3.api.hosts[1] | object | `{"host":"*.s3.garage.tld","paths":[{"path":"/","pathType":"Prefix"}]}` | garage S3 API endpoint, DNS style bucket access |
 | ingress.s3.api.labels | object | `{}` |  |
 | ingress.s3.api.tls | list | `[]` |  |
-| ingress.s3.web.annotations | object | `{}` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
+| ingress.s3.web.annotations | object | `{}` |  |
+| ingress.s3.web.className | string | `""` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
 | ingress.s3.web.enabled | bool | `false` |  |
 | ingress.s3.web.hosts[0] | object | `{"host":"*.web.garage.tld","paths":[{"path":"/","pathType":"Prefix"}]}` | wildcard website access with bucket name prefix |
 | ingress.s3.web.hosts[1] | object | `{"host":"mywebpage.example.com","paths":[{"path":"/","pathType":"Prefix"}]}` | specific bucket access with FQDN bucket |
 | ingress.s3.web.labels | object | `{}` |  |
 | ingress.s3.web.tls | list | `[]` |  |
 | livenessProbe | object | `{}` | Specifies a livenessProbe |
-| monitoring | object | `{"grafanaDashboard":{"annotations":{},"enabled":false},"metrics":{"enabled":false,"serviceMonitor":{"enabled":false,"interval":"15s","labels":{},"path":"/metrics","relabelings":[],"scheme":"http","scrapeTimeout":"10s","tlsConfig":{}}},"tracing":{"sink":""}}` | Garage Cluster monmitoring configuration |
+| monitoring | object | `{"grafanaDashboard":{"annotations":{},"enabled":false},"metrics":{"enabled":false,"serviceMonitor":{"enabled":false,"interval":"15s","labels":{},"namespace":"","path":"/metrics","relabelings":[],"scheme":"http","scrapeTimeout":"10s","tlsConfig":{}}},"tracing":{"sink":""}}` | Garage Cluster monmitoring configuration |
 | monitoring.grafanaDashboard.enabled | bool | `false` | If enabled deploys the grafana dashboard as configmap |
 | monitoring.metrics.enabled | bool | `false` | If true, a service for monitoring is created with a prometheus.io/scrape annotation |
 | monitoring.metrics.serviceMonitor.enabled | bool | `false` | If true, a ServiceMonitor CRD is created for a prometheus operator https://github.com/coreos/prometheus-operator |
