@@ -1,15 +1,27 @@
 # Advanced configuration with multi-node layout, monitoring, resource tuning, and Gateway API routes
+
+deployment:
+  replicaCount: 3
+
+garage:
+  replicationFactor: "2"
+  secret:
+    rpcSecret: "changeme-advanced-rpc"
+    adminToken: "changeme-advanced-admin"
+  s3:
+    api:
+      rootDomain: ".s3.prod.example.com"
+    web:
+      rootDomain: ".web.prod.example.com"
+
 persistence:
   enabled: true
   data:
     storageClass: garage-perf-hdd
-    size: 10Ti
+    size: 10Gi
   meta:
-    storageClass: garage-perf-ssd
-    size: 500Gi
-
-deployment:
-  replicaCount: 4
+    storageClass: longhorn
+    size: 512Mi
 
 resources:
   requests:
@@ -82,6 +94,11 @@ gatewayApi:
 
 webui:
   enabled: true
+
+  auth:
+    enabled: true
+    userPassHash: "admin:$2y$10$wjnUPtyPiODuT7f1t5rs5O.HYYpM0EeP0D7EXoeHKfBwPX7rUSaTG" # htpasswd -nbBC 10 "admin" "admin1234"
+
   gatewayApi:
     enabled: true
     hostnames:

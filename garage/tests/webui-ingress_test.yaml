@@ -30,6 +30,10 @@ tests:
 
   # Ingress class tests
   - it: should set ingress class name
+    capabilities:
+      majorVersion: "1"
+      minorVersion: "25"
+      kubeVersion: v1.25.0
     set:
       webui.enabled: true
       webui.ingress.enabled: true
@@ -92,6 +96,10 @@ tests:
 
   # Host configuration tests
   - it: should configure hosts
+    capabilities:
+      majorVersion: "1"
+      minorVersion: "25"
+      kubeVersion: v1.25.0
     set:
       webui.enabled: true
       webui.ingress.enabled: true
@@ -151,6 +159,10 @@ tests:
 
   # Backend configuration tests
   - it: should use correct service name and port for backend
+    capabilities:
+      majorVersion: "1"
+      minorVersion: "25"
+      kubeVersion: v1.25.0
     set:
       webui.enabled: true
       webui.ingress.enabled: true

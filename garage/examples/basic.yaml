@@ -1,4 +1,15 @@
 # Base configuration with persistent volumes and initial buckets/keys
+garage:
+  replicationFactor: "1"
+  secret:
+    rpcSecret: "changeme-basic-rpc"
+    adminToken: "changeme-basic-admin"
+  s3:
+    api:
+      rootDomain: ".s3.homelab.test"
+    web:
+      rootDomain: ".web.homelab.test"
+
 persistence:
   enabled: true
   data:

@@ -1,4 +1,18 @@
 # Recommended configuration enabling Web UI access behind Ingress
+deployment:
+  replicaCount: 3
+
+garage:
+  replicationFactor: "2"
+  secret:
+    rpcSecret: "changeme-recommended-rpc"
+    adminToken: "changeme-recommended-admin"
+  s3:
+    api:
+      rootDomain: ".s3.garage.example.com"
+    web:
+      rootDomain: ".web.garage.example.com"
+
 persistence:
   enabled: true
   data:
@@ -55,6 +69,11 @@ ingress:
 
 webui:
   enabled: true
+
+  auth:
+    enabled: true
+    userPassHash: "admin:$2y$10$wjnUPtyPiODuT7f1t5rs5O.HYYpM0EeP0D7EXoeHKfBwPX7rUSaTG" # htpasswd -nbBC 10 "admin" "admin1234"
+
   ingress:
     enabled: true
     className: nginx

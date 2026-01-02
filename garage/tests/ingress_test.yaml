@@ -247,3 +247,41 @@ tests:
       - equal:
           path: metadata.name
           value: my-garage-s3-api
+
+  # Legacy Kubernetes version tests
+  - it: should set ingress class annotation for S3 API on older kubernetes versions
+    capabilities:
+      majorVersion: "1"
+      minorVersion: "17"
+      kubeVersion: v1.17.0
+    set:
+      ingress.s3.api.enabled: true
+      ingress.s3.api.className: nginx
+    asserts:
+      - equal:
+          path: metadata.annotations["kubernetes.io/ingress.class"]
+          value: nginx
+      - notExists:
+          path: spec.ingressClassName
+
+  - it: should set ingress class annotation for S3 Web on older kubernetes versions
+    capabilities:
+      majorVersion: "1"
+      minorVersion: "17"
+      kubeVersion: v1.17.0
+    set:
+      ingress.s3.web.enabled: true
+      ingress.s3.web.className: nginx
+    asserts:
+      - equal:
+          path: metadata.annotations["kubernetes.io/ingress.class"]
+          value: nginx
+      - notExists:
+          path: spec.ingressClassName
+
+  - it: should reset capabilities
+    capabilities:
+      kubeVersion: 1.25.0
+    asserts:
+      - hasDocuments:
+          count: 0
