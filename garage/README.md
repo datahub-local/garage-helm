@@ -1,6 +1,6 @@
 # garage
 
-![Version: 0.1.2](https://img.shields.io/badge/Version-0.1.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
 
 S3-compatible object store for small self-hosted geo-distributed deployments.
 
@@ -22,14 +22,14 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
-| clusterConfig | object | `{"affinity":{},"buckets":[],"enabled":false,"extraCommands":[],"image":{"pullPolicy":"IfNotPresent","repository":"","tag":""},"imagePullSecrets":[],"keys":[],"layout":{"capacity":"","enabled":true,"zone":"dc1"},"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"resources":{},"securityContext":{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true},"tolerations":[]}` | Garage Cluster configuration |
+| clusterConfig | object | `{"affinity":{},"buckets":[],"enabled":false,"extraCommands":[],"image":{"pullPolicy":"IfNotPresent","repository":"","tag":""},"imagePullSecrets":[],"keys":{},"layout":{"capacity":"","enabled":true,"zone":"dc1"},"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"resources":{},"securityContext":{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true},"tolerations":[]}` | Garage Cluster configuration |
 | clusterConfig.affinity | object | `{}` | Affinity |
 | clusterConfig.buckets | list | `[]` | List of buckets to create |
 | clusterConfig.enabled | bool | `false` | Enable the cluster configuration job |
 | clusterConfig.extraCommands | list | `[]` | Extra commands to run |
 | clusterConfig.image.repository | string | `""` | Image to use for the configuration job (defaults to the same as garage) |
 | clusterConfig.imagePullSecrets | list | `[]` | Image pull secrets |
-| clusterConfig.keys | list | `[]` | List of keys to create keyId format: must start with 'GK' followed by 24 hex-encoded characters (12 bytes) secretKey format: must be 64 hex-encoded characters (32 bytes) |
+| clusterConfig.keys | object | `{}` | Dict of keys to create keyId format: must start with 'GK' followed by 24 hex-encoded characters (12 bytes) secretKey format: must be 64 hex-encoded characters (32 bytes) |
 | clusterConfig.layout.capacity | string | `""` | Capacity to assign to nodes. If empty, defaults to persistence.data.size |
 | clusterConfig.layout.enabled | bool | `true` | Enable layout configuration |
 | clusterConfig.layout.zone | string | `"dc1"` | Zone to assign nodes to |

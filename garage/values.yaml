@@ -350,12 +350,21 @@ clusterConfig:
   # - name: my-bucket
   #   public: false
 
-  # -- List of keys to create
+  # -- Dict of keys to create
   # keyId format: must start with 'GK' followed by 24 hex-encoded characters (12 bytes)
   # secretKey format: must be 64 hex-encoded characters (32 bytes)
-  keys: []
-  # - keyId: GK12345678901234567890abcd
+  keys: {}
+  # Examples:
+  # 1. Stored directly in the values.yaml
+  # my-key:
+  #   keyId: GK12345678901234567890abcd
   #   secretKey: 123456789012345678901234567890123456789012345678901234567890abcd
+  #   buckets: [] # Optional list of buckets to allow access to
+  # 2. Use an existing secret in kubernetes (containing the keyId and secretKey)
+  # my-existing-key:
+  #   secretName: someSecretWithKeys
+  #   keyId: keyIdA
+  #   secretKey: secretKeyA
   #   buckets: [] # Optional list of buckets to allow access to
 
   # -- Extra commands to run

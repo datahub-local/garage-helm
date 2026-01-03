@@ -314,3 +314,20 @@ tests:
       - equal:
           path: metadata.name
           value: my-garage-configure
+
+  # Keys environment variables tests
+  - it: should set key environment variables
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.keys:
+        my-key:
+          secretName: my-secret
+          keyId: key-id
+          secretKey: secret-key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].name
+          value: KEY_ID_MY_KEY
+      - equal:
+          path: spec.template.spec.containers[0].env[3].name
+          value: SECRET_KEY_MY_KEY

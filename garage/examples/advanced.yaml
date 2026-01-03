@@ -6,8 +6,8 @@ deployment:
 garage:
   replicationFactor: "2"
   secret:
-    rpcSecret: "changeme-advanced-rpc"
-    adminToken: "changeme-advanced-admin"
+    rpcSecret: "4425f5c26c5e11581d3223904324dcb5b5d5dfb14e5e7f35e38c595424f5f1e6" # openssl rand -hex 32
+    adminToken: "UkLeGWEvHnXBqnueR3ISEMWpOnm40jH2tM2HnnL/0F4=" # openssl rand -base64 32
   s3:
     api:
       rootDomain: ".s3.prod.example.com"
@@ -18,7 +18,7 @@ persistence:
   enabled: true
   data:
     storageClass: garage-perf-hdd
-    size: 10Gi
+    size: 5Ti
   meta:
     storageClass: longhorn
     size: 512Mi
@@ -43,15 +43,25 @@ clusterConfig:
       public: true
     - name: compliance
   keys:
-    - keyId: GKFEDCBA9876543210FEDCBA98
+    # Example of multiple keys with different bucket access within values.yaml
+    analytics-media-key:
+      keyId: GKFEDCBA9876543210FEDCBA98
       secretKey: 89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567
       buckets:
         - analytics
         - media
-    - keyId: GK00112233445566778899AABB
+    compliance-key:
+      keyId: GK00112233445566778899AABB
       secretKey: 76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98
       buckets:
         - compliance
+    # Example using a secret created via extraResources
+    external-key:
+      secretName: my-external-key
+      keyId: keyId
+      secretKey: secretKey
+      buckets:
+        - analytics
   resources:
     requests:
       cpu: 250m
@@ -107,3 +117,13 @@ webui:
       - name: shared-gateway
         namespace: networking
         sectionName: https
+
+# Example of creating a secret to be used in clusterConfig.keys
+extraResources:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: my-external-key
+    stringData:
+      keyId: GK12345678901234567890abcd
+      secretKey: 123456789012345678901234567890123456789012345678901234567890abcd

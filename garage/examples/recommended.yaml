@@ -4,9 +4,6 @@ deployment:
 
 garage:
   replicationFactor: "2"
-  secret:
-    rpcSecret: "changeme-recommended-rpc"
-    adminToken: "changeme-recommended-admin"
   s3:
     api:
       rootDomain: ".s3.garage.example.com"
@@ -33,7 +30,8 @@ clusterConfig:
     - name: backups
     - name: staging
   keys:
-    - keyId: GK89ABCDEF0123456789ABCDEF
+    recommended-key:
+      keyId: GK89ABCDEF0123456789ABCDEF
       secretKey: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
       buckets:
         - media
