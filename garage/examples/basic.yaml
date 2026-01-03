@@ -1,9 +1,6 @@
 # Base configuration with persistent volumes and initial buckets/keys
 garage:
   replicationFactor: "1"
-  secret:
-    rpcSecret: "changeme-basic-rpc"
-    adminToken: "changeme-basic-admin"
   s3:
     api:
       rootDomain: ".s3.homelab.test"
@@ -29,7 +26,8 @@ clusterConfig:
     - name: media
       public: true
   keys:
-    - keyId: GK0123456789ABCDEF01234567
+    my-key:
+      keyId: GK0123456789ABCDEF01234567
       secretKey: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       buckets:
         - backups

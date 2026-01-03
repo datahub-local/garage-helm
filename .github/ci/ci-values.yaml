@@ -10,7 +10,7 @@ deployment:
 persistence:
   meta:
     storageClass: "local-path"
-    size: 100Mi
+    size: 50Mi
   data:
     storageClass: "local-path"
     size: 250Mi
@@ -18,16 +18,24 @@ persistence:
 clusterConfig:
   enabled: true
   buckets:
-  - name: my-bucket
-    public: false
-  - name: my-public-bucket
-    public: true
+    - name: my-bucket
+      public: false
+    - name: my-public-bucket
+      public: true
   keys:
-  - keyId: GK12345678901234567890abcd
-    secretKey: 123456789012345678901234567890123456789012345678901234567890abcd
-    buckets:
-    - my-bucket
-    - my-public-bucket
+    my-key:
+      keyId: GK12345678901234567890abcd
+      secretKey: 123456789012345678901234567890123456789012345678901234567890abcd
+      buckets:
+        - my-bucket
+        - my-public-bucket
+    # Example using a secret created via extraResources
+    my-external-key:
+      secretName: my-external-key
+      keyId: keyId
+      secretKey: secretKey
+      buckets:
+        - my-bucket
 
 webui:
   enabled: true
@@ -35,3 +43,13 @@ webui:
   auth:
     enabled: true
     userPassHash: "admin:$2y$10$wjnUPtyPiODuT7f1t5rs5O.HYYpM0EeP0D7EXoeHKfBwPX7rUSaTG" # htpasswd -nbBC 10 "admin" "admin1234"
+
+# Example of creating a secret to be used in clusterConfig.keys
+extraResources:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: my-external-key
+    stringData:
+      keyId: GKdcba09876543210987654321
+      secretKey: dcba098765432109876543210987654321098765432109876543210987654321
