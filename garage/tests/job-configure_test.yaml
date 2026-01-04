@@ -113,7 +113,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.initContainers[1].image
-          pattern: "dxflrs/amd64_garage:v2.1.0"
+          pattern: "dxflrs/garage:v2.1.0"
 
   - it: should use custom garage image for garage bin init container
     set:

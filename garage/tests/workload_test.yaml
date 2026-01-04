@@ -45,7 +45,7 @@ tests:
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].image
-          pattern: "dxflrs/amd64_garage:v2.1.0"
+          pattern: "dxflrs/garage:v2.1.0"
 
   - it: should use custom image repository and tag
     set:

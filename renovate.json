@@ -20,7 +20,7 @@
       "matchStrings": [
         "appVersion: \"(?<currentValue>.*?)\""
       ],
-      "depNameTemplate": "dxflrs/amd64_garage",
+      "depNameTemplate": "dxflrs/garage",
       "datasourceTemplate": "docker"
     }
   ],
