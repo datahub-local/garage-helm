@@ -96,8 +96,8 @@ deployment:
   podManagementPolicy: OrderedReady
 
 image:
-  # -- default to amd64 docker image
-  repository: dxflrs/amd64_garage
+  # -- default to Docker image
+  repository: dxflrs/garage
   # -- set the image tag, please prefer using the chart version and not this
   # to avoid compatibility issues
   tag: ""
