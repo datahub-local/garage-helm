@@ -1,6 +1,17 @@
-# garage-helm
+# Another Helm chart for Garage
 
-Another Helm chart for Garage
+Why Garage?
+- MinIO is no longer a real OSS project. Garage is open, simple, and actively maintained.
+- Perfect for small/home clusters. No crazy resource requirements or complex setup.
+- S3 API compatible, so your apps and tools just work.
+
+What makes this Helm chart better than the official one?
+
+1. Automated cluster configuration: No more manual CLI or YAML hacks. Just set your layout, buckets, and keys in values.yaml and it all gets set up for you.
+2. Built-in WebUI: Deploy the Garage WebUI with a single flag for easy management.
+3. Gateway API support: Native support for Kubernetes Gateway API (plus Ingress), so you’re ready for modern K8s networking.
+4. Grafana dashboard & ServiceMonitor: Get instant metrics and dashboards out of the box.
+5. Extra resources: Inject any custom K8s manifest (Secrets, ConfigMaps, etc.) directly via values.yaml.
 
 ## :test_tube: Getting Started
 
