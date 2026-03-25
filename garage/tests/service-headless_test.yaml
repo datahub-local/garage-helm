@@ -26,6 +26,12 @@ tests:
       - equal:
           path: spec.clusterIP
           value: None
+  
+  - it: should publish not-ready addresses for early-init
+    asserts:
+      - equal:
+          path: spec.publishNotReadyAddresses
+          value: true
 
   # Port configuration tests
   - it: should expose all required ports
