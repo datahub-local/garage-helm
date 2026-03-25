@@ -37,7 +37,7 @@ tests:
     asserts:
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook"]
-          value: PostSync
+          value: Sync
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
           value: BeforeHookCreation,HookSucceeded
