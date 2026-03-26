@@ -65,10 +65,10 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | garage.s3.api.rootDomain | string | `".s3.garage.tld"` |  |
 | garage.s3.web.index | string | `"index.html"` |  |
 | garage.s3.web.rootDomain | string | `".web.garage.tld"` |  |
-| garage.secret.adminToken | string | `""` | If not given, a random secret will be generated and stored in a Secret object |
+| garage.secret.adminToken | string | `""` | Must be provided together with garage.secret.rpcSecret. If both are omitted, random values are generated. |
 | garage.secret.create | bool | `true` | Flag to control if a kubernetes secret should be created during deployment |
 | garage.secret.name | string | `""` | Name of the secret. If you want to use a pre-existing kubernetes secret use the name of an already existing secret and set secret.create to false |
-| garage.secret.rpcSecret | string | `""` | If not given, a random secret will be generated and stored in a Secret object |
+| garage.secret.rpcSecret | string | `""` | Must be provided together with garage.secret.adminToken. If both are omitted, random values are generated. |
 | gatewayApi | object | `{"s3":{"api":{"additionalRules":{},"annotations":{},"enabled":false,"filters":[],"hostnames":["s3.garage.ltd","*.s3.garage.ltd"],"labels":{},"matches":[{"path":{"type":"PathPrefix","value":"/"}}],"parentRefs":[]},"web":{"additionalRules":{},"annotations":{},"enabled":false,"filters":[],"hostnames":["*.web.garage.tld"],"labels":{},"matches":[{"path":{"type":"PathPrefix","value":"/"}}],"parentRefs":[]}}}` | Support for gateway api |
 | gatewayApi.s3.api | object | `{"additionalRules":{},"annotations":{},"enabled":false,"filters":[],"hostnames":["s3.garage.ltd","*.s3.garage.ltd"],"labels":{},"matches":[{"path":{"type":"PathPrefix","value":"/"}}],"parentRefs":[]}` | Creates route for the S3 api |
 | gatewayApi.s3.api.additionalRules | object | `{}` | Any custom rule you want to specify |
@@ -143,7 +143,7 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | webui.affinity | object | `{}` | affinity for WebUI pods |
 | webui.auth.enabled | bool | `false` | Enable authentication for WebUI |
 | webui.auth.existingSecret | string | `""` | Use an existing secret for authentication (must contain 'webuiAuthUserPass' key) |
-| webui.auth.userPassHash | string | `""` | Pre-hashed password in bcrypt format (username:hash), REQUIRED when auth is enabled Generate with: htpasswd -nbBC 10 "username" "password" Example: "admin:$2y$10$DSTi9o..." |
+| webui.auth.userPassHash | string | `""` | When the chart manages the auth secret, provide this together with garage.secret.rpcSecret and garage.secret.adminToken. Generate with: htpasswd -nbBC 10 "username" "password" Example: "admin:$2y$10$DSTi9o..." |
 | webui.enabled | bool | `false` | Enable the garage-webui deployment |
 | webui.extraVolumeMounts | object | `{}` | extra volume mounts for WebUI |
 | webui.extraVolumes | object | `{}` | extra volumes for WebUI |
