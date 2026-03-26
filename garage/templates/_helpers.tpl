@@ -152,6 +152,34 @@ trace_sink = "{{ .Values.monitoring.tracing.sink }}"
 {{/*
 Garage secret data content
 */}}
+{{- define "garage.secret.validate" -}}
+{{- $hasRpcSecret := not (empty .Values.garage.secret.rpcSecret) -}}
+{{- $hasAdminToken := not (empty .Values.garage.secret.adminToken) -}}
+{{- $requiresWebuiAuthSecret := and .Values.webui.enabled .Values.webui.auth.enabled (not .Values.webui.auth.existingSecret) -}}
+{{- $hasWebuiAuthUserPass := and $requiresWebuiAuthSecret (not (empty .Values.webui.auth.userPassHash)) -}}
+
+{{- if $requiresWebuiAuthSecret -}}
+{{- if and (or $hasRpcSecret $hasAdminToken $hasWebuiAuthUserPass) (not (and $hasRpcSecret $hasAdminToken $hasWebuiAuthUserPass)) -}}
+{{- fail "garage.secret.rpcSecret, garage.secret.adminToken, and webui.auth.userPassHash must either all be provided or all be omitted" -}}
+{{- end -}}
+{{- if not $hasWebuiAuthUserPass -}}
+{{- fail "webui.auth.userPassHash is required when auth is enabled. Generate it with: htpasswd -nbBC 10 'username' 'password'" -}}
+{{- end -}}
+{{- else -}}
+{{- if and (or $hasRpcSecret $hasAdminToken) (not (and $hasRpcSecret $hasAdminToken)) -}}
+{{- fail "garage.secret.rpcSecret and garage.secret.adminToken must either both be provided or both be omitted" -}}
+{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{- define "garage.secret.hasRandomSecrets" -}}
+{{- $hasRpcSecret := not (empty .Values.garage.secret.rpcSecret) -}}
+{{- $hasAdminToken := not (empty .Values.garage.secret.adminToken) -}}
+{{- if and (not $hasRpcSecret) (not $hasAdminToken) -}}
+true
+{{- end -}}
+{{- end }}
+
 {{- define "garage.secret.content" -}}
 rpcSecret: {{ .Values.garage.secret.rpcSecret | default (include "jupyterhub.randHex" 64) | b64enc | quote }}
 adminToken: {{ .Values.garage.secret.adminToken | default (include "jupyterhub.randHex" 64) | b64enc | quote }}
