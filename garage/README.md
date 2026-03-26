@@ -22,9 +22,10 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
-| clusterConfig | object | `{"affinity":{},"buckets":[],"enabled":false,"extraCommands":[],"image":{"pullPolicy":"IfNotPresent","repository":"","tag":""},"imagePullSecrets":[],"keys":{},"layout":{"capacity":"","enabled":true,"zone":"dc1"},"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"resources":{},"securityContext":{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true},"tolerations":[]}` | Garage Cluster configuration |
+| clusterConfig | object | `{"affinity":{},"buckets":[],"configureImage":{"pullPolicy":"IfNotPresent","repository":"busybox","tag":"latest"},"enabled":false,"extraCommands":[],"image":{"pullPolicy":"IfNotPresent","repository":"","tag":""},"imagePullSecrets":[],"keys":{},"layout":{"capacity":"","enabled":true,"zone":"dc1"},"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"resources":{},"securityContext":{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true},"tolerations":[],"toolsImage":{"pullPolicy":"IfNotPresent","repository":"busybox","tag":"musl"}}` | Garage Cluster configuration |
 | clusterConfig.affinity | object | `{}` | Affinity |
 | clusterConfig.buckets | list | `[]` | List of buckets to create |
+| clusterConfig.configureImage.repository | string | `"busybox"` | Image to use for the configure task for the configuration job |
 | clusterConfig.enabled | bool | `false` | Enable the cluster configuration job |
 | clusterConfig.extraCommands | list | `[]` | Extra commands to run |
 | clusterConfig.image.repository | string | `""` | Image to use for the configuration job (defaults to the same as garage) |
@@ -39,6 +40,7 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | clusterConfig.resources | object | `{}` | Resources for the job |
 | clusterConfig.securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true}` | Container security context |
 | clusterConfig.tolerations | list | `[]` | Tolerations |
+| clusterConfig.toolsImage.repository | string | `"busybox"` | Image to use for the tools task for the configuration job |
 | commonLabels | object | `{}` | Additional labels to add to all resources created by this chart |
 | deployment.kind | string | `"StatefulSet"` | Switchable to DaemonSet |
 | deployment.podManagementPolicy | string | `"OrderedReady"` | If using statefulset, allow Parallel or OrderedReady (default) |

@@ -30,7 +30,8 @@ spec:
         {{- toYaml .Values.clusterConfig.podSecurityContext | nindent 8 }}
       initContainers:
         - name: get-busybox-tools
-          image: busybox:musl
+          image: "{{ .Values.clusterConfig.toolsImage.repository }}:{{ .Values.clusterConfig.toolsImage.tag }}"
+          imagePullPolicy: {{ .Values.clusterConfig.toolsImage.pullPolicy }}
           resources:
             requests:
               cpu: 50m
@@ -60,8 +61,8 @@ spec:
               mountPath: /shared
       containers:
         - name: configure
-          image: busybox:latest
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.clusterConfig.configureImage.repository }}:{{ .Values.clusterConfig.configureImage.tag }}"
+          imagePullPolicy: {{ .Values.clusterConfig.configureImage.pullPolicy }}
           resources:
             {{- toYaml .Values.clusterConfig.resources | nindent 12 }}
           securityContext:

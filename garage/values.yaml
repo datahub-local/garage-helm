@@ -376,6 +376,18 @@ clusterConfig:
     tag: ""
     pullPolicy: IfNotPresent
 
+  toolsImage:
+    # -- Image to use for the tools task for the configuration job
+    repository: busybox
+    tag: musl
+    pullPolicy: IfNotPresent
+
+  configureImage:
+    # -- Image to use for the configure task for the configuration job
+    repository: busybox
+    tag: latest
+    pullPolicy: IfNotPresent
+
   # -- Image pull secrets
   imagePullSecrets: []
 
