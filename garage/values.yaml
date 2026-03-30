@@ -426,6 +426,9 @@ webui:
   # -- Enable the garage-webui deployment
   enabled: false
 
+  # -- Base path or prefix for Web UI
+  basePath: "/"
+
   # -- Number of WebUI replicas
   replicaCount: 1
 
