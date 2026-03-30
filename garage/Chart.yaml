@@ -2,7 +2,7 @@ apiVersion: v2
 name: garage
 description: S3-compatible object store for small self-hosted geo-distributed deployments.
 type: application
-version: "0.4.0"
+version: "0.4.1"
 appVersion: "v2.2.0"
 
 home: https://garagehq.deuxfleurs.fr/
