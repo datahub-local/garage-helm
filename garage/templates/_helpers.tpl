@@ -213,3 +213,12 @@ webuiAuthUserPass: {{ .Values.webui.auth.userPassHash | b64enc | quote }}
     {{- end }}
     {{- $result | trunc . }}
 {{- end }}
+
+{{/*
+WebUI base path - returns trimmed path only if not empty or null
+*/}}
+{{- define "garage.webui.basePath" -}}
+{{- if .Values.webui.basePath }}
+{{- .Values.webui.basePath | trimSuffix "/" }}
+{{- end }}
+{{- end }}

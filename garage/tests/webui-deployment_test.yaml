@@ -199,6 +199,57 @@ tests:
           content:
             name: AUTH_USER_PASS
 
+  - it: should set BASE_PATH environment variable
+    set:
+      webui.enabled: true
+      webui.basePath: "/my-app/"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BASE_PATH
+            value: "/my-app"
+
+  - it: should set BASE_PATH environment variable as it is
+    set:
+      webui.enabled: true
+      webui.basePath: "/my-app"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BASE_PATH
+            value: "/my-app"
+
+  - it: should not set BASE_PATH when basePath is /
+    set:
+      webui.enabled: true
+      webui.basePath: "/"
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BASE_PATH
+
+  - it: should not set BASE_PATH when basePath is not provided
+    set:
+      webui.enabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BASE_PATH
+
+  - it: should not set BASE_PATH when basePath is empty
+    set:
+      webui.enabled: true
+      webui.basePath: ""
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BASE_PATH
+
   # Port configuration
   - it: should expose http port
     set:
