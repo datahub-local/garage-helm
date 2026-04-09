@@ -43,25 +43,42 @@ clusterConfig:
       public: true
     - name: compliance
   keys:
-    # Example of multiple keys with different bucket access within values.yaml
+    # Read-write access to specific buckets
     analytics-media-key:
       keyId: GKFEDCBA9876543210FEDCBA98
       secretKey: 89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567
       buckets:
-        - analytics
-        - media
-    compliance-key:
+        - name: analytics
+          read: true
+          write: true
+        - name: media
+          read: true
+          write: true
+    # Read-only access
+    compliance-reader-key:
       keyId: GK00112233445566778899AABB
       secretKey: 76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98
       buckets:
-        - compliance
+        - name: compliance
+          read: true
+    # Owner access (can manage bucket settings)
+    compliance-owner-key:
+      keyId: GK00112233445566778899CCDD
+      secretKey: aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899
+      buckets:
+        - name: compliance
+          read: true
+          write: true
+          owner: true
     # Example using a secret created via extraResources
     external-key:
       secretName: my-external-key
       keyId: keyId
       secretKey: secretKey
       buckets:
-        - analytics
+        - name: analytics
+          read: true
+          write: true
   resources:
     requests:
       cpu: 250m
