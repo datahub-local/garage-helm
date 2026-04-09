@@ -51,8 +51,11 @@ spec:
                   name: {{ .Values.webui.auth.existingSecret | default (include "garage.secretName" .) }}
                   key: webuiAuthUserPass
             {{- end }}
+            {{- $basePath := include "garage.webui.basePath" . }}
+            {{- if $basePath }}
             - name: BASE_PATH
-              value: {{ .Values.webui.basePath }}
+              value: {{ $basePath }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 3909
