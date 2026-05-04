@@ -1,6 +1,6 @@
 # garage
 
-![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.2.0](https://img.shields.io/badge/AppVersion-v2.2.0-informational?style=flat-square)
+![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.3.0](https://img.shields.io/badge/AppVersion-v2.3.0-informational?style=flat-square)
 
 S3-compatible object store for small self-hosted geo-distributed deployments.
 
@@ -147,6 +147,7 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | webui.auth.enabled | bool | `false` | Enable authentication for WebUI |
 | webui.auth.existingSecret | string | `""` | Use an existing secret for authentication (must contain 'webuiAuthUserPass' key) |
 | webui.auth.userPassHash | string | `""` | When the chart manages the auth secret, provide this together with garage.secret.rpcSecret and garage.secret.adminToken. Generate with: htpasswd -nbBC 10 "username" "password" Example: "admin:$2y$10$DSTi9o..." |
+| webui.basePath | string | `"/"` | Base path or prefix for Web UI |
 | webui.enabled | bool | `false` | Enable the garage-webui deployment |
 | webui.extraVolumeMounts | object | `{}` | extra volume mounts for WebUI |
 | webui.extraVolumes | object | `{}` | extra volumes for WebUI |
