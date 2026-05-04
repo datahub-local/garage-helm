@@ -1,6 +1,6 @@
 # garage
 
-![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.3.0](https://img.shields.io/badge/AppVersion-v2.3.0-informational?style=flat-square)
+![Version: 0.4.0](https://img.shields.io/badge/Version-0.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.2.0](https://img.shields.io/badge/AppVersion-v2.2.0-informational?style=flat-square)
 
 S3-compatible object store for small self-hosted geo-distributed deployments.
 
@@ -24,6 +24,9 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | affinity | object | `{}` |  |
 | clusterConfig | object | `{"affinity":{},"buckets":[],"configureImage":{"pullPolicy":"IfNotPresent","repository":"busybox","tag":"latest"},"enabled":false,"extraCommands":[],"image":{"pullPolicy":"IfNotPresent","repository":"","tag":""},"imagePullSecrets":[],"keys":{},"layout":{"capacity":"","enabled":true,"zone":"dc1"},"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"resources":{},"securityContext":{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true},"tolerations":[],"toolsImage":{"pullPolicy":"IfNotPresent","repository":"busybox","tag":"musl"}}` | Garage Cluster configuration |
 | clusterConfig.affinity | object | `{}` | Affinity |
+| clusterConfig.helmSync | object | `{"asHook":true,"ttlSecondsAfterFinished":300}` | Change sync behaviour with helm (helm install or helm upgrade) |
+| clusterConfig.helmSync.asHook | bool | `true` | If true, the configure job runs as a post-install/post-upgrade hook (waits for all resources to be ready first). Set to false to run the job as a regular resource alongside other pods. |
+| clusterConfig.helmSync.ttlSecondsAfterFinished | int | `300` | Time in seconds to keep the completed job before automatic cleanup (only applies when asHook is false) |
 | clusterConfig.buckets | list | `[]` | List of buckets to create |
 | clusterConfig.configureImage.repository | string | `"busybox"` | Image to use for the configure task for the configuration job |
 | clusterConfig.enabled | bool | `false` | Enable the cluster configuration job |
@@ -144,7 +147,6 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | webui.auth.enabled | bool | `false` | Enable authentication for WebUI |
 | webui.auth.existingSecret | string | `""` | Use an existing secret for authentication (must contain 'webuiAuthUserPass' key) |
 | webui.auth.userPassHash | string | `""` | When the chart manages the auth secret, provide this together with garage.secret.rpcSecret and garage.secret.adminToken. Generate with: htpasswd -nbBC 10 "username" "password" Example: "admin:$2y$10$DSTi9o..." |
-| webui.basePath | string | `"/"` | Base path or prefix for Web UI |
 | webui.enabled | bool | `false` | Enable the garage-webui deployment |
 | webui.extraVolumeMounts | object | `{}` | extra volume mounts for WebUI |
 | webui.extraVolumes | object | `{}` | extra volumes for WebUI |
