@@ -37,6 +37,8 @@ spec:
         - name: get-busybox-tools
           image: "{{ .Values.clusterConfig.toolsImage.repository }}:{{ .Values.clusterConfig.toolsImage.tag }}"
           imagePullPolicy: {{ .Values.clusterConfig.toolsImage.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.clusterConfig.securityContext | nindent 12 }}
           resources:
             requests:
               cpu: 50m
@@ -51,6 +53,8 @@ spec:
         - name: get-garage-bin
           image: "{{ .Values.clusterConfig.image.repository | default .Values.image.repository }}:{{ .Values.clusterConfig.image.tag | default .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.clusterConfig.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.clusterConfig.securityContext | nindent 12 }}
           resources:
             requests:
               cpu: 50m
