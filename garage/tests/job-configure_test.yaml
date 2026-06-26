@@ -147,6 +147,39 @@ tests:
           path: spec.template.spec.initContainers[1].image
           value: "custom/garage:v1.0.0"
 
+  - it: should set security context on init containers
+    set:
+      clusterConfig.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext.capabilities.drop[0]
+          value: ALL
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.initContainers[1].securityContext.capabilities.drop[0]
+          value: ALL
+      - equal:
+          path: spec.template.spec.initContainers[1].securityContext.readOnlyRootFilesystem
+          value: true
+
+  - it: should honor custom securityContext on init containers
+    set:
+      clusterConfig.enabled: true
+      clusterConfig.securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.template.spec.initContainers[1].securityContext.allowPrivilegeEscalation
+          value: false
+
   # Main container tests
   - it: should use busybox image for configure container
     set:
