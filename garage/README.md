@@ -44,6 +44,7 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | clusterConfig.securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true}` | Container security context |
 | clusterConfig.tolerations | list | `[]` | Tolerations |
 | clusterConfig.toolsImage.repository | string | `"busybox"` | Image to use for the tools task for the configuration job |
+| clusterDomain | string | `"cluster.local"` | Cluster DNS domain. Override on clusters not using the default `cluster.local` (e.g. kubelet `--cluster-domain=cluster.example.com`). |
 | commonLabels | object | `{}` | Additional labels to add to all resources created by this chart |
 | deployment.kind | string | `"StatefulSet"` | Switchable to DaemonSet |
 | deployment.podManagementPolicy | string | `"OrderedReady"` | If using statefulset, allow Parallel or OrderedReady (default) |
