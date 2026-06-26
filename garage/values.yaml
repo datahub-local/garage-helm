@@ -7,6 +7,10 @@ commonLabels: {}
 #   app.kubernetes.io/part-of: storage
 #   team: platform
 
+# -- Cluster DNS domain. Override on clusters not using the default
+# `cluster.local` (e.g. kubelet `--cluster-domain=cluster.example.com`).
+clusterDomain: cluster.local
+
 # Garage configuration. These values go to garage.toml
 garage:
   # -- Can be changed for better performance on certain systems

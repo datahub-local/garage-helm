@@ -146,6 +146,26 @@ tests:
             name: S3_ENDPOINT_URL
             value: "http://RELEASE-NAME-garage.test-ns.svc.cluster.local:3900"
 
+  - it: should honor clusterDomain override in service URLs
+    set:
+      webui.enabled: true
+      clusterDomain: cluster.example.com
+      service.ports.admin: 3903
+      service.ports.s3Api: 3900
+    release:
+      namespace: test-ns
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_BASE_URL
+            value: "http://RELEASE-NAME-garage.test-ns.svc.cluster.example.com:3903"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: S3_ENDPOINT_URL
+            value: "http://RELEASE-NAME-garage.test-ns.svc.cluster.example.com:3900"
+
   - it: should set API_ADMIN_KEY from secret
     set:
       webui.enabled: true

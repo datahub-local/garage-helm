@@ -36,9 +36,9 @@ spec:
           imagePullPolicy: {{ .Values.webui.image.pullPolicy }}
           env:
             - name: API_BASE_URL
-              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.ports.admin }}"
+              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.service.ports.admin }}"
             - name: S3_ENDPOINT_URL
-              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.ports.s3Api }}"
+              value: "http://{{ include "garage.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.service.ports.s3Api }}"
             - name: API_ADMIN_KEY
               valueFrom:
                 secretKeyRef:
