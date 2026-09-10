@@ -15,7 +15,8 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 ## Source Code
 
 * <https://git.deuxfleurs.fr/Deuxfleurs/garage.git>
-* <https://github.com/datahub-local/garage-helm/garage>
+* <https://github.com/deuxfleurs-org/garage>
+* <https://github.com/datahub-local/garage-helm>
 
 ## Values
 
