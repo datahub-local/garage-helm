@@ -145,3 +145,90 @@ tests:
           content:
             team: platform
         documentIndex: 1
+
+  # kubernetesSkipCrd: namespaced Role + RoleBinding, nothing cluster-scoped
+  - it: should create a Role instead of a ClusterRole when kubernetesSkipCrd is true
+    set:
+      garage.kubernetesSkipCrd: true
+    release:
+      namespace: my-namespace
+      name: my-release
+    asserts:
+      - hasDocuments:
+          count: 2
+      - isKind:
+          of: Role
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: manage-garagenodes-my-release
+        documentIndex: 0
+      - equal:
+          path: metadata.namespace
+          value: my-namespace
+        documentIndex: 0
+      - isKind:
+          of: RoleBinding
+        documentIndex: 1
+      - equal:
+          path: metadata.name
+          value: allow-garagenodes-for-my-release
+        documentIndex: 1
+      - equal:
+          path: metadata.namespace
+          value: my-namespace
+        documentIndex: 1
+
+  - it: should grant only garagenodes in the Role when kubernetesSkipCrd is true
+    set:
+      garage.kubernetesSkipCrd: true
+    asserts:
+      - equal:
+          path: rules
+          value:
+            - apiGroups: ["deuxfleurs.fr"]
+              resources: ["garagenodes"]
+              verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+        documentIndex: 0
+
+  - it: should bind the Role to the service account when kubernetesSkipCrd is true
+    set:
+      garage.kubernetesSkipCrd: true
+      serviceAccount.name: custom-sa
+    release:
+      namespace: my-namespace
+      name: my-release
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: custom-sa
+        documentIndex: 1
+      - equal:
+          path: subjects[0].namespace
+          value: my-namespace
+        documentIndex: 1
+      - equal:
+          path: roleRef.kind
+          value: Role
+        documentIndex: 1
+      - equal:
+          path: roleRef.name
+          value: manage-garagenodes-my-release
+        documentIndex: 1
+
+  - it: should include common labels on Role and RoleBinding when kubernetesSkipCrd is true
+    set:
+      garage.kubernetesSkipCrd: true
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+        documentIndex: 0
+      - isSubset:
+          path: metadata.labels
+          content:
+            app.kubernetes.io/name: garage
+            app.kubernetes.io/instance: RELEASE-NAME
+        documentIndex: 1

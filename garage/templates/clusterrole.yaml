@@ -1,3 +1,38 @@
+{{- if .Values.garage.kubernetesSkipCrd }}
+{{- /*
+The CRD is installed outside the chart, so Garage never creates or patches it
+(skip_crd) and only reads/writes GarageNode objects, which are namespaced and
+listed in the release namespace (src/rpc/kubernetes.rs: Api::namespaced). A
+Role is enough, so the chart can be installed without cluster-scoped rights.
+*/}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: manage-garagenodes-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "garage.labels" . | nindent 4 }}
+rules:
+- apiGroups: ["deuxfleurs.fr"]
+  resources: ["garagenodes"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: allow-garagenodes-for-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "garage.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "garage.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: manage-garagenodes-{{ .Release.Name }}
+  apiGroup: rbac.authorization.k8s.io
+{{- else }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -26,3 +61,4 @@ roleRef:
   kind: ClusterRole
   name: manage-crds-{{ .Release.Namespace }}-{{ .Release.Name }}
   apiGroup: rbac.authorization.k8s.io
+{{- end -}}

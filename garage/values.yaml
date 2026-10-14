@@ -54,7 +54,9 @@ garage:
   # -- This is not required if you use the integrated kubernetes discovery
   bootstrapPeers: []
   # -- Set to true if you want to use k8s discovery but install the CRDs manually outside
-  # of the helm chart, for example if you operate at namespace level without cluster ressources
+  # of the helm chart, for example if you operate at namespace level without cluster ressources.
+  # The chart then renders a namespaced Role + RoleBinding (GarageNode objects only) instead of
+  # a ClusterRole + ClusterRoleBinding
   kubernetesSkipCrd: false
   s3:
     api:
