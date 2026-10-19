@@ -196,6 +196,26 @@ webuiAuthUserPass: {{ .Values.webui.auth.userPassHash | b64enc | quote }}
 {{- end }}
 
 {{/*
+Checksum annotations for the pod templates.
+
+checksum/secret is only emitted when the secret content is derived entirely from
+values. When rpcSecret/adminToken are omitted, "garage.secret.content" falls back
+to "jupyterhub.randHex", which returns a different value on every render, so
+hashing it would produce a new annotation every time the chart is templated. Helm
+does not notice, because each upgrade renders once, but a GitOps controller
+re-renders on every reconcile, sees a changed pod template and rolls the pods -
+taking the S3 endpoint down - on a loop. Omitting the annotation keeps the pod
+template stable; nothing is lost, because in that case there is no
+operator-supplied secret value whose change we could detect.
+*/}}
+{{- define "garage.checksumAnnotations" -}}
+checksum/config: {{ include "garage.config.content" . | sha256sum }}
+{{- if ne (include "garage.secret.hasRandomSecrets" .) "true" }}
+checksum/secret: {{ include "garage.secret.content" . | sha256sum }}
+{{- end }}
+{{- end }}
+
+{{/*
     Returns given number of random Hex characters.
     In practice, it generates up to 100 randAlphaNum strings
     that are filtered from non-hex characters and augmented

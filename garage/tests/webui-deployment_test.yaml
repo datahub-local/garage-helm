@@ -489,3 +489,22 @@ tests:
             app.kubernetes.io/name: garage
             app.kubernetes.io/instance: RELEASE-NAME
             app.kubernetes.io/component: webui
+
+  # Checksum annotation tests
+  - it: should omit the secret checksum annotation when secrets are randomly generated
+    set:
+      webui.enabled: true
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/secret"]
+
+  - it: should set the secret checksum annotation when secrets are provided in values
+    set:
+      webui.enabled: true
+      garage.secret.rpcSecret: test-rpc-secret
+      garage.secret.adminToken: test-admin-token
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/secret"]

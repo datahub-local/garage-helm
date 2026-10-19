@@ -502,3 +502,34 @@ tests:
       - matchRegex:
           path: metadata.name
           pattern: ".*custom-name.*"
+
+  # Checksum annotation tests
+  - it: should always set the config checksum annotation
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+
+  - it: should omit the secret checksum annotation when secrets are randomly generated
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/secret"]
+
+  - it: should omit the secret checksum annotation when an external secret is used
+    set:
+      garage.secret.create: false
+      garage.secret.name: external-secret
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/secret"]
+
+  # The expected hash is asserted literally so that this test fails if a random
+  # fallback ever creeps back into the hashed content. Update it if the shape of
+  # "garage.secret.content" changes.
+  - it: should set a deterministic secret checksum annotation when secrets are provided in values
+    set:
+      garage.secret.rpcSecret: test-rpc-secret
+      garage.secret.adminToken: test-admin-token
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["checksum/secret"]
+          value: b23ba4d524eccea88687b42bcad14a22b5159c7a0647d3821917595c57624e0e
