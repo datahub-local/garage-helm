@@ -220,6 +220,37 @@ tests:
           path: data["garage.toml"]
           pattern: 'index = "home.html"'
 
+  - it: should not set public endpoint by default
+    asserts:
+      - notMatchRegex:
+          path: data["garage.toml"]
+          pattern: "public_endpoint"
+
+  - it: should set public endpoint when configured
+    set:
+      garage.s3.api.publicEndpoint: "https://s3.example.com"
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: 'public_endpoint = "https://s3.example.com"'
+
+  - it: should set public endpoint path style to false
+    set:
+      garage.s3.api.publicEndpoint: "https://s3.example.com"
+      garage.s3.api.publicEndpointPathStyle: false
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "public_endpoint_path_style = false"
+
+  - it: should set public endpoint path style to true
+    set:
+      garage.s3.api.publicEndpointPathStyle: true
+    asserts:
+      - matchRegex:
+          path: data["garage.toml"]
+          pattern: "public_endpoint_path_style = true"
+
   # Admin configuration
   - it: should configure admin API
     asserts:

@@ -150,6 +150,43 @@ jobs:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_SKIP_EXISTING: "true"
 
+      - name: Publish chart README and migration notes to releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          chart_readme="garage/README.md"
+          shopt -s nullglob
+
+          for pkg in .cr-release-packages/*.tgz; do
+            chart_name="$(helm show chart "${pkg}" | awk -F': ' '$1=="name" {print $2; exit}')"
+            chart_version="$(helm show chart "${pkg}" | awk -F': ' '$1=="version" {print $2; exit}')"
+            tag="${chart_name}-${chart_version}"
+
+            if ! gh release view "${tag}" >/dev/null 2>&1; then
+              echo "Release ${tag} not found, skipping"
+              continue
+            fi
+
+            # Ship the rendered chart README next to the packaged chart
+            cp "${chart_readme}" "/tmp/${tag}-README.md"
+            gh release upload "${tag}" "/tmp/${tag}-README.md" --clobber
+
+            # Keep GitHub's generated notes, then append the migration section
+            awk '/^## Migration notes$/ { found=1 }
+                 found && /^## / && !/^## Migration notes$/ { exit }
+                 found' "${chart_readme}" > /tmp/migration-notes.md
+
+            existing_body="$(gh release view "${tag}" --json body -q .body)"
+            if [[ -s /tmp/migration-notes.md && "${existing_body}" != *"## Migration notes"* ]]; then
+              {
+                printf '%s\n\n' "${existing_body}"
+                cat /tmp/migration-notes.md
+              } > /tmp/release-body.md
+              gh release edit "${tag}" --notes-file /tmp/release-body.md
+            fi
+          done
+
       - name: Login to GHCR
         uses: docker/login-action@v3.0.0
         with:

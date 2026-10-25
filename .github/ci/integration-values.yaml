@@ -1,0 +1,49 @@
+# Values for the integration test (see integration-test.sh).
+# Single node, replication factor 1: fast to converge, still exercises the layout,
+# bucket and key configuration job plus the S3 data path.
+garage:
+  replicationFactor: 1
+  logFormat: json
+  secret:
+    rpcSecret: "1111111111111111111111111111111111111111111111111111111111111111"
+    adminToken: "integration-admin-token"
+  s3:
+    api:
+      region: "garage"
+      rootDomain: ".s3.garage.local"
+      publicEndpoint: "https://s3.garage.local"
+      publicEndpointPathStyle: false
+
+deployment:
+  replicaCount: 1
+
+persistence:
+  meta:
+    storageClass: "local-path"
+    size: 50Mi
+  data:
+    storageClass: "local-path"
+    size: 250Mi
+
+clusterConfig:
+  enabled: true
+  buckets:
+    - name: integration-bucket
+  keys:
+    integration-key:
+      keyId: GK00000000000000000000a001
+      secretKey: "0000000000000000000000000000000000000000000000000000000000000001"
+      buckets:
+        - name: integration-bucket
+          read: true
+          write: true
+          owner: true
+    # Read/write but not owner: v2.5.0 restricts lifecycle endpoints to owners.
+    integration-readonly-key:
+      keyId: GK00000000000000000000a002
+      secretKey: "0000000000000000000000000000000000000000000000000000000000000002"
+      buckets:
+        - name: integration-bucket
+          read: true
+          write: true
+          owner: false
