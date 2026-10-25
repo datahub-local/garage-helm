@@ -13,6 +13,81 @@
 
 {{ template "chart.sourcesSection" . }}
 
+## Install
+
+```shell
+helm repo add garage-helm https://datahub-local.github.io/garage-helm
+helm repo update
+
+helm install garage garage-helm/garage \
+  --namespace garage \
+  --create-namespace \
+  --values values.yaml
+```
+
+The chart is also published as an OCI artifact:
+
+```shell
+helm install garage oci://ghcr.io/datahub-local/garage/garage --version 1.0.0
+```
+
+Pin a version with `--version x.y.z`; available versions are listed on the
+[chart releases](https://github.com/datahub-local/garage-helm/releases).
+
+## Configure
+
+Two secrets plus a replica count are enough to start a cluster:
+
+```yaml
+garage:
+  secret:
+    rpcSecret: "<64 hex characters>" # openssl rand -hex 32
+    adminToken: "<random string>"
+
+deployment:
+  replicaCount: 3
+```
+
+Enabling the configuration job seeds the layout, buckets and S3 keys, so no
+manual `garage` CLI run is needed:
+
+```yaml
+clusterConfig:
+  enabled: true
+  layout:
+    zone: dc1
+  buckets:
+    - name: my-bucket
+  keys:
+    my-key:
+      keyId: GK00000000000000000000abcd
+      secretKey: "<64 hex characters>"
+      buckets:
+        - name: my-bucket
+          read: true
+          write: true
+          owner: true
+```
+
+Runnable starting points:
+
+- [basic.yaml](https://github.com/datahub-local/garage-helm/blob/main/garage/examples/basic.yaml) – persistent volumes and the minimum cluster configuration job.
+- [recommended.yaml](https://github.com/datahub-local/garage-helm/blob/main/garage/examples/recommended.yaml) – adds the Web UI and nginx Ingress entries.
+- [advanced.yaml](https://github.com/datahub-local/garage-helm/blob/main/garage/examples/advanced.yaml) – scaled layout, monitoring objects and Gateway API routes.
+
+Common switches:
+
+- `webui.enabled` – deploy the Garage Web UI.
+- `monitoring.metrics.serviceMonitor.enabled` and `monitoring.grafanaDashboard.enabled` – Prometheus scrape config and Grafana dashboard.
+- `ingress.*` or `gatewayApi.*` – expose the S3 API and web buckets.
+- `garage.s3.api.publicEndpoint` – endpoint reported by the admin API and used in generated object URLs.
+- `garage.logFormat: json` – one JSON log object per line on stderr.
+- `garage.existingConfigMap` or `garage.garageTomlString` – full control over `garage.toml`.
+
+Secrets can stay outside the chart: set `garage.secret.create: false` with
+`garage.secret.name`, and use `secretName` for entries in `clusterConfig.keys`.
+Every value is documented in the table below.
+
 ## Migration notes
 
 ### Chart 1.0.0 — Garage v2.5.0
