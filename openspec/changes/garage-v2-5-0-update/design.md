@@ -32,6 +32,11 @@ the workload template's `env` list rather than `garage.toml`.
 - **Release step runs after chart-releaser.** The migration notes are extracted
   from the rendered chart README with `awk` and appended to the body that GitHub
   generated, guarded by a substring check so re-runs do not duplicate the section.
+- **Pages landing page is synced from main.** chart-releaser only writes
+  `index.yaml` to `gh-pages`; the rendered site comes from the README files
+  already on that branch, which had drifted (chart README still at 0.1.0). The
+  release job copies `README.md` and `garage/README.md` onto `gh-pages` after the
+  release steps, committing only when the content changed.
 
 ## Risks
 

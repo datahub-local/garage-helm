@@ -27,3 +27,4 @@
 - [x] 5.2 Point the root README at `garage/README.md#migration-notes`
 - [x] 5.3 Exclude `README.md.gotmpl` from the packaged chart
 - [x] 5.4 Attach the chart README to each release and append migration notes to its body
+- [x] 5.5 Sync `README.md` and `garage/README.md` onto `gh-pages` so the Pages landing page is current

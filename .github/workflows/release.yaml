@@ -213,3 +213,26 @@ jobs:
 
             helm push "${pkg}" "oci://ghcr.io/${GITHUB_REPOSITORY_OWNER}/garage"
           done
+
+      - name: Sync Pages documentation
+        run: |
+          set -euo pipefail
+          # chart-releaser only writes index.yaml; the Pages landing page renders
+          # whatever README the gh-pages branch carries, so keep it in sync here.
+          mkdir -p /tmp/pages-docs/garage
+          cp README.md /tmp/pages-docs/README.md
+          cp garage/README.md /tmp/pages-docs/garage/README.md
+
+          git fetch origin gh-pages
+          git checkout -B gh-pages origin/gh-pages
+          cp /tmp/pages-docs/README.md README.md
+          cp /tmp/pages-docs/garage/README.md garage/README.md
+
+          if git diff --quiet -- README.md garage/README.md; then
+            echo "Pages documentation already up to date"
+            exit 0
+          fi
+
+          git add README.md garage/README.md
+          git commit -m "docs: sync Pages documentation from main"
+          git push origin gh-pages
