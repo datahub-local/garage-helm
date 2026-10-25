@@ -1,6 +1,9 @@
 # garage
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.1.0](https://img.shields.io/badge/AppVersion-v2.1.0-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.5.0](https://img.shields.io/badge/AppVersion-v2.5.0-informational?style=flat-square)
+
+> [!WARNING]
+> Upgrading an existing release? Read the [migration notes](#migration-notes) below before running `helm upgrade`. Garage v2.5.0 is a one-way upgrade and tightens bucket lifecycle permissions.
 
 S3-compatible object store for small self-hosted geo-distributed deployments.
 
@@ -15,21 +18,145 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 ## Source Code
 
 * <https://git.deuxfleurs.fr/Deuxfleurs/garage.git>
-* <https://github.com/datahub-local/garage-helm/garage>
+* <https://github.com/deuxfleurs-org/garage>
+* <https://github.com/datahub-local/garage-helm>
+
+## Install
+
+```shell
+helm repo add garage-helm https://datahub-local.github.io/garage-helm
+helm repo update
+
+helm install garage garage-helm/garage \
+  --namespace garage \
+  --create-namespace \
+  --values values.yaml
+```
+
+The chart is also published as an OCI artifact:
+
+```shell
+helm install garage oci://ghcr.io/datahub-local/garage/garage --version 1.0.0
+```
+
+Pin a version with `--version x.y.z`; available versions are listed on the
+[chart releases](https://github.com/datahub-local/garage-helm/releases).
+
+## Configure
+
+Two secrets plus a replica count are enough to start a cluster:
+
+```yaml
+garage:
+  secret:
+    rpcSecret: "<64 hex characters>" # openssl rand -hex 32
+    adminToken: "<random string>"
+
+deployment:
+  replicaCount: 3
+```
+
+Enabling the configuration job seeds the layout, buckets and S3 keys, so no
+manual `garage` CLI run is needed:
+
+```yaml
+clusterConfig:
+  enabled: true
+  layout:
+    zone: dc1
+  buckets:
+    - name: my-bucket
+  keys:
+    my-key:
+      keyId: GK00000000000000000000abcd
+      secretKey: "<64 hex characters>"
+      buckets:
+        - name: my-bucket
+          read: true
+          write: true
+          owner: true
+```
+
+Runnable starting points:
+
+- [basic.yaml](https://github.com/datahub-local/garage-helm/blob/main/garage/examples/basic.yaml) – persistent volumes and the minimum cluster configuration job.
+- [recommended.yaml](https://github.com/datahub-local/garage-helm/blob/main/garage/examples/recommended.yaml) – adds the Web UI and nginx Ingress entries.
+- [advanced.yaml](https://github.com/datahub-local/garage-helm/blob/main/garage/examples/advanced.yaml) – scaled layout, monitoring objects and Gateway API routes.
+
+Common switches:
+
+- `webui.enabled` – deploy the Garage Web UI.
+- `monitoring.metrics.serviceMonitor.enabled` and `monitoring.grafanaDashboard.enabled` – Prometheus scrape config and Grafana dashboard.
+- `ingress.*` or `gatewayApi.*` – expose the S3 API and web buckets.
+- `garage.s3.api.publicEndpoint` – endpoint reported by the admin API and used in generated object URLs.
+- `garage.logFormat: json` – one JSON log object per line on stderr.
+- `garage.existingConfigMap` or `garage.garageTomlString` – full control over `garage.toml`.
+
+Secrets can stay outside the chart: set `garage.secret.create: false` with
+`garage.secret.name`, and use `secretName` for entries in `clusterConfig.keys`.
+Every value is documented in the table below.
+
+## Migration notes
+
+### Chart 1.0.0 — Garage v2.5.0
+
+This chart upgrade deploys Garage v2.5.0, which is **not backwards-compatible**: once a node runs v2.5.0 it must not be downgraded. A cluster can however keep running a mix of v2.x nodes during a rolling upgrade, so upgrade one replica at a time and keep the old image around until every node reports the new version.
+
+- **Set an owner key (recommended).** `Put`, `Get` and `DeleteBucketLifecycle` now return `AccessDenied` for keys that only have read/write permissions. Give the key that manages lifecycle rules owner on the bucket; keep read/write-only keys for data-plane clients.
+
+  In `clusterConfig.keys`, owner is only available through the object bucket form — the string form grants read+write and no owner:
+
+  ```yaml
+  clusterConfig:
+    keys:
+      lifecycle-key:
+        keyId: GK00000000000000000000abcd
+        secretKey: 0000000000000000000000000000000000000000000000000000000000000000
+        buckets:
+          - name: my-bucket
+            read: true
+            write: true
+            owner: true
+  ```
+
+  The once-applied configure job grants owner on the next install or upgrade. To grant it to an existing key without changing values, run:
+
+  ```shell
+  garage bucket allow <bucket> --key <key-id> --owner
+  ```
+
+  or put that command in `clusterConfig.extraCommands`.
+
+- **Set the public S3 endpoint (recommended).** `public_endpoint` is used for generated object URLs and reported by the admin API. Without it Garage guesses the URL from `root_domain`.
+
+  ```yaml
+  garage:
+    s3:
+      api:
+        publicEndpoint: "https://s3.example.com"
+        publicEndpointPathStyle: false # optional: vhost style by default when rootDomain is set
+  ```
+
+- **Optional JSON logs.** Set `garage.logFormat: json` to get one JSON object per line on stderr, instead of the text format.
+
+Existing releases render unchanged manifests after the chart upgrade: the new values default to empty and the pod config checksum stays the same. Only the Garage image changes.
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
-| clusterConfig | object | `{"affinity":{},"buckets":[],"enabled":false,"extraCommands":[],"image":{"pullPolicy":"IfNotPresent","repository":"","tag":""},"imagePullSecrets":[],"keys":[],"layout":{"capacity":"","enabled":true,"zone":"dc1"},"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"resources":{},"securityContext":{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true},"tolerations":[]}` | Garage Cluster configuration |
+| clusterConfig | object | `{"affinity":{},"buckets":[],"configureImage":{"pullPolicy":"IfNotPresent","repository":"busybox","tag":"latest"},"enabled":false,"extraCommands":[],"helmSync":{"asHook":true,"ttlSecondsAfterFinished":300},"image":{"pullPolicy":"IfNotPresent","repository":"","tag":""},"imagePullSecrets":[],"keys":{},"layout":{"capacity":"","enabled":true,"zone":"dc1"},"nodeSelector":{},"podAnnotations":{},"podSecurityContext":{"fsGroup":1000,"fsGroupChangePolicy":"OnRootMismatch","runAsGroup":1000,"runAsNonRoot":true,"runAsUser":1000},"resources":{},"securityContext":{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true},"tolerations":[],"toolsImage":{"pullPolicy":"IfNotPresent","repository":"busybox","tag":"musl"}}` | Garage Cluster configuration |
 | clusterConfig.affinity | object | `{}` | Affinity |
 | clusterConfig.buckets | list | `[]` | List of buckets to create |
+| clusterConfig.configureImage.repository | string | `"busybox"` | Image to use for the configure task for the configuration job |
 | clusterConfig.enabled | bool | `false` | Enable the cluster configuration job |
 | clusterConfig.extraCommands | list | `[]` | Extra commands to run |
+| clusterConfig.helmSync.asHook | bool | `true` | If true, the configure job runs as a post-install/post-upgrade hook (waits for all resources to be ready first). Set to false to run the job as a regular resource alongside other pods. Recommended when startup of other pods depends on readiness of the garage container. |
+| clusterConfig.helmSync.ttlSecondsAfterFinished | int | `300` | Time in seconds to keep the completed job before automatic cleanup (only applies when asHook is false) |
 | clusterConfig.image.repository | string | `""` | Image to use for the configuration job (defaults to the same as garage) |
 | clusterConfig.imagePullSecrets | list | `[]` | Image pull secrets |
-| clusterConfig.keys | list | `[]` | List of keys to create keyId format: must start with 'GK' followed by 24 hex-encoded characters (12 bytes) secretKey format: must be 64 hex-encoded characters (32 bytes) |
+| clusterConfig.keys | object | `{}` | Dict of keys to create keyId format: must start with 'GK' followed by 24 hex-encoded characters (12 bytes) secretKey format: must be 64 hex-encoded characters (32 bytes) |
 | clusterConfig.layout.capacity | string | `""` | Capacity to assign to nodes. If empty, defaults to persistence.data.size |
 | clusterConfig.layout.enabled | bool | `true` | Enable layout configuration |
 | clusterConfig.layout.zone | string | `"dc1"` | Zone to assign nodes to |
@@ -39,6 +166,8 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | clusterConfig.resources | object | `{}` | Resources for the job |
 | clusterConfig.securityContext | object | `{"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true}` | Container security context |
 | clusterConfig.tolerations | list | `[]` | Tolerations |
+| clusterConfig.toolsImage.repository | string | `"busybox"` | Image to use for the tools task for the configuration job |
+| clusterDomain | string | `"cluster.local"` | Cluster DNS domain. Override on clusters not using the default `cluster.local` (e.g. kubelet `--cluster-domain=cluster.example.com`). |
 | commonLabels | object | `{}` | Additional labels to add to all resources created by this chart |
 | deployment.kind | string | `"StatefulSet"` | Switchable to DaemonSet |
 | deployment.podManagementPolicy | string | `"OrderedReady"` | If using statefulset, allow Parallel or OrderedReady (default) |
@@ -56,17 +185,20 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | garage.existingConfigMap | string | `""` | if not empty string, allow using an existing ConfigMap for the garage.toml, if set, ignores garage.toml |
 | garage.garageTomlString | string | `""` | String Template for the garage configuration if set, ignores above values. Values can be templated, see https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/ |
 | garage.kubernetesSkipCrd | bool | `false` | Set to true if you want to use k8s discovery but install the CRDs manually outside of the helm chart, for example if you operate at namespace level without cluster ressources |
+| garage.logFormat | string | `""` | Set to "json" to log one JSON object per line on stderr instead of text. Any other value is passed to Garage unchanged (empty means the default text format). https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#environment-variables |
 | garage.metadataAutoSnapshotInterval | string | `""` | If this value is set, Garage will automatically take a snapshot of the metadata DB file at a regular interval and save it in the metadata directory. https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#metadata_auto_snapshot_interval |
 | garage.replicationFactor | string | `"3"` | Default to 3 replicas, see the replication_factor section at https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#replication_factor |
 | garage.rpc.bindAddr | string | `"[::]:3901"` |  |
+| garage.s3.api.publicEndpoint | string | `""` | Publicly reachable S3 endpoint, as a full URI (`https://s3.example.com`). Used for generated object URLs and reported by the admin API; when empty, Garage falls back to `rootDomain`. Recommended since v2.5.0. |
+| garage.s3.api.publicEndpointPathStyle | string | `""` | Whether generated object URLs use path style (`https://endpoint/bucket/key`) instead of vhost style (`https://bucket.endpoint/key`). When unset, Garage uses path style only if `rootDomain` is empty; Garage rejects `false` in that case. |
 | garage.s3.api.region | string | `"garage"` |  |
 | garage.s3.api.rootDomain | string | `".s3.garage.tld"` |  |
 | garage.s3.web.index | string | `"index.html"` |  |
 | garage.s3.web.rootDomain | string | `".web.garage.tld"` |  |
-| garage.secret.adminToken | string | `""` | If not given, a random secret will be generated and stored in a Secret object |
+| garage.secret.adminToken | string | `""` | Must be provided together with garage.secret.rpcSecret. If both are omitted, random values are generated. |
 | garage.secret.create | bool | `true` | Flag to control if a kubernetes secret should be created during deployment |
 | garage.secret.name | string | `""` | Name of the secret. If you want to use a pre-existing kubernetes secret use the name of an already existing secret and set secret.create to false |
-| garage.secret.rpcSecret | string | `""` | If not given, a random secret will be generated and stored in a Secret object |
+| garage.secret.rpcSecret | string | `""` | Must be provided together with garage.secret.adminToken. If both are omitted, random values are generated. |
 | gatewayApi | object | `{"s3":{"api":{"additionalRules":{},"annotations":{},"enabled":false,"filters":[],"hostnames":["s3.garage.ltd","*.s3.garage.ltd"],"labels":{},"matches":[{"path":{"type":"PathPrefix","value":"/"}}],"parentRefs":[]},"web":{"additionalRules":{},"annotations":{},"enabled":false,"filters":[],"hostnames":["*.web.garage.tld"],"labels":{},"matches":[{"path":{"type":"PathPrefix","value":"/"}}],"parentRefs":[]}}}` | Support for gateway api |
 | gatewayApi.s3.api | object | `{"additionalRules":{},"annotations":{},"enabled":false,"filters":[],"hostnames":["s3.garage.ltd","*.s3.garage.ltd"],"labels":{},"matches":[{"path":{"type":"PathPrefix","value":"/"}}],"parentRefs":[]}` | Creates route for the S3 api |
 | gatewayApi.s3.api.additionalRules | object | `{}` | Any custom rule you want to specify |
@@ -87,23 +219,25 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | gatewayApi.s3.web.matches | list | `[{"path":{"type":"PathPrefix","value":"/"}}]` | Matches for the default rule |
 | gatewayApi.s3.web.parentRefs | list | `[]` | Gateway reference that the HTTPRoute should bind against |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
-| image.repository | string | `"dxflrs/amd64_garage"` | default to amd64 docker image |
+| image.repository | string | `"dxflrs/garage"` | default to Docker image |
 | image.tag | string | `""` | set the image tag, please prefer using the chart version and not this to avoid compatibility issues |
 | imagePullSecrets | list | `[]` | set if you need credentials to pull your custom image |
-| ingress.s3.api.annotations | object | `{}` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
+| ingress.s3.api.annotations | object | `{}` |  |
+| ingress.s3.api.className | string | `""` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
 | ingress.s3.api.enabled | bool | `false` |  |
 | ingress.s3.api.hosts[0] | object | `{"host":"s3.garage.tld","paths":[{"path":"/","pathType":"Prefix"}]}` | garage S3 API endpoint, to be used with awscli for example |
 | ingress.s3.api.hosts[1] | object | `{"host":"*.s3.garage.tld","paths":[{"path":"/","pathType":"Prefix"}]}` | garage S3 API endpoint, DNS style bucket access |
 | ingress.s3.api.labels | object | `{}` |  |
 | ingress.s3.api.tls | list | `[]` |  |
-| ingress.s3.web.annotations | object | `{}` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
+| ingress.s3.web.annotations | object | `{}` |  |
+| ingress.s3.web.className | string | `""` | Rely _either_ on the className or the annotation below but not both! If you want to use the className, set className: "nginx" and replace "nginx" by an Ingress controller name, examples [here](https://kubernetes.io/docs/concepts/services-networking/ingress-controllers). |
 | ingress.s3.web.enabled | bool | `false` |  |
 | ingress.s3.web.hosts[0] | object | `{"host":"*.web.garage.tld","paths":[{"path":"/","pathType":"Prefix"}]}` | wildcard website access with bucket name prefix |
 | ingress.s3.web.hosts[1] | object | `{"host":"mywebpage.example.com","paths":[{"path":"/","pathType":"Prefix"}]}` | specific bucket access with FQDN bucket |
 | ingress.s3.web.labels | object | `{}` |  |
 | ingress.s3.web.tls | list | `[]` |  |
 | livenessProbe | object | `{}` | Specifies a livenessProbe |
-| monitoring | object | `{"grafanaDashboard":{"annotations":{},"enabled":false},"metrics":{"enabled":false,"serviceMonitor":{"enabled":false,"interval":"15s","labels":{},"path":"/metrics","relabelings":[],"scheme":"http","scrapeTimeout":"10s","tlsConfig":{}}},"tracing":{"sink":""}}` | Garage Cluster monmitoring configuration |
+| monitoring | object | `{"grafanaDashboard":{"annotations":{},"enabled":false},"metrics":{"enabled":false,"serviceMonitor":{"enabled":false,"interval":"15s","labels":{},"namespace":"","path":"/metrics","relabelings":[],"scheme":"http","scrapeTimeout":"10s","tlsConfig":{}}},"tracing":{"sink":""}}` | Garage Cluster monmitoring configuration |
 | monitoring.grafanaDashboard.enabled | bool | `false` | If enabled deploys the grafana dashboard as configmap |
 | monitoring.metrics.enabled | bool | `false` | If true, a service for monitoring is created with a prometheus.io/scrape annotation |
 | monitoring.metrics.serviceMonitor.enabled | bool | `false` | If true, a ServiceMonitor CRD is created for a prometheus operator https://github.com/coreos/prometheus-operator |
@@ -139,7 +273,8 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | webui.affinity | object | `{}` | affinity for WebUI pods |
 | webui.auth.enabled | bool | `false` | Enable authentication for WebUI |
 | webui.auth.existingSecret | string | `""` | Use an existing secret for authentication (must contain 'webuiAuthUserPass' key) |
-| webui.auth.userPassHash | string | `""` | Pre-hashed password in bcrypt format (username:hash), REQUIRED when auth is enabled Generate with: htpasswd -nbBC 10 "username" "password" Example: "admin:$2y$10$DSTi9o..." |
+| webui.auth.userPassHash | string | `""` | When the chart manages the auth secret, provide this together with garage.secret.rpcSecret and garage.secret.adminToken. Generate with: htpasswd -nbBC 10 "username" "password" Example: "admin:$2y$10$DSTi9o..." |
+| webui.basePath | string | `"/"` | Base path or prefix for Web UI |
 | webui.enabled | bool | `false` | Enable the garage-webui deployment |
 | webui.extraVolumeMounts | object | `{}` | extra volume mounts for WebUI |
 | webui.extraVolumes | object | `{}` | extra volumes for WebUI |
@@ -154,7 +289,7 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | webui.gatewayApi.parentRefs | list | `[]` | Gateway reference that the HTTPRoute should bind against |
 | webui.image.pullPolicy | string | `"IfNotPresent"` | image pull policy |
 | webui.image.repository | string | `"khairul169/garage-webui"` | garage-webui image repository |
-| webui.image.tag | string | `"latest"` | garage-webui image tag |
+| webui.image.tag | string | `"1.1.0"` | garage-webui image tag |
 | webui.imagePullSecrets | list | `[]` | image pull secrets for private registries |
 | webui.ingress | object | `{"annotations":{},"className":"","enabled":false,"hosts":[{"host":"garage-webui.tld","paths":[{"path":"/","pathType":"Prefix"}]}],"labels":{},"tls":[]}` | Ingress configuration for WebUI |
 | webui.ingress.annotations | object | `{}` | Ingress annotations |

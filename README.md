@@ -1,6 +1,20 @@
-# garage-helm
+# Another Helm chart for Garage
 
-Another Helm chart for Garage
+> [!WARNING]
+> Upgrading an existing release? Read the [migration notes](./garage/README.md#migration-notes) in the chart README before you run `helm upgrade`. Garage v2.5.0 is a one-way upgrade and tightens bucket lifecycle permissions.
+
+Why Garage?
+- MinIO is no longer a real OSS project. Garage is open, simple, and actively maintained.
+- Perfect for small/home clusters. No crazy resource requirements or complex setup.
+- S3 API compatible, so your apps and tools just work.
+
+What makes this Helm chart better than the official one?
+
+1. Automated cluster configuration: No more manual CLI or YAML hacks. Just set your layout, buckets, and keys in values.yaml and it all gets set up for you.
+2. Built-in WebUI: Deploy the Garage WebUI with a single flag for easy management.
+3. Gateway API support: Native support for Kubernetes Gateway API (plus Ingress), so you’re ready for modern K8s networking.
+4. Grafana dashboard & ServiceMonitor: Get instant metrics and dashboards out of the box.
+5. Extra resources: Inject any custom K8s manifest (Secrets, ConfigMaps, etc.) directly via values.yaml.
 
 ## :test_tube: Getting Started
 
@@ -59,6 +73,12 @@ If you want to install a specific version, execute the previous command adding: 
 ### Values
 
 Please read the [Helm Chart README.md](./garage/README.md) for details on how to configure the values needed for this chart.
+
+### Examples
+
+- `garage/examples/basic.yaml` – Persistent volumes plus the minimum cluster configuration job that seeds buckets and API keys.
+- `garage/examples/recommended.yaml` – Builds on the basics with the Web UI and nginx Ingress entries for `garage.example.com` style domains.
+- `garage/examples/advanced.yaml` – Shows a scaled layout with resource tuning, monitoring objects, and Gateway API routes for production domains.
 
 ## :memo: Contributing
 
