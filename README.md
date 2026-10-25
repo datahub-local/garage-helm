@@ -1,5 +1,8 @@
 # Another Helm chart for Garage
 
+> [!WARNING]
+> Upgrading an existing release? Read the [migration notes](./garage/README.md#migration-notes) in the chart README before you run `helm upgrade`. Garage v2.5.0 is a one-way upgrade and tightens bucket lifecycle permissions.
+
 Why Garage?
 - MinIO is no longer a real OSS project. Garage is open, simple, and actively maintained.
 - Perfect for small/home clusters. No crazy resource requirements or complex setup.

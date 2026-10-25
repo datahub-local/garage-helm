@@ -34,6 +34,11 @@ garage:
   # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#compression_level
   compressionLevel: "1"
 
+  # -- Set to "json" to log one JSON object per line on stderr instead of text.
+  # Any other value is passed to Garage unchanged (empty means the default text format).
+  # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#environment-variables
+  logFormat: ""
+
   # -- If this value is set, Garage will automatically take a snapshot of the metadata DB file at a regular interval and save it in the metadata directory.
   # https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#metadata_auto_snapshot_interval
   metadataAutoSnapshotInterval: ""
@@ -60,6 +65,14 @@ garage:
     api:
       region: "garage"
       rootDomain: ".s3.garage.tld"
+      # -- Publicly reachable S3 endpoint, as a full URI (`https://s3.example.com`).
+      # Used for generated object URLs and reported by the admin API; when empty,
+      # Garage falls back to `rootDomain`. Recommended since v2.5.0.
+      publicEndpoint: ""
+      # -- Whether generated object URLs use path style (`https://endpoint/bucket/key`)
+      # instead of vhost style (`https://bucket.endpoint/key`). When unset, Garage uses
+      # path style only if `rootDomain` is empty; Garage rejects `false` in that case.
+      publicEndpointPathStyle: ""
     web:
       rootDomain: ".web.garage.tld"
       index: "index.html"

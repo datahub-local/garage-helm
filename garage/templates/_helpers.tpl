@@ -134,6 +134,12 @@ skip_crd = {{ .Values.garage.kubernetesSkipCrd }}
 s3_region = "{{ .Values.garage.s3.api.region }}"
 api_bind_addr = "[::]:3900"
 root_domain = "{{ .Values.garage.s3.api.rootDomain }}"
+{{- if .Values.garage.s3.api.publicEndpoint }}
+public_endpoint = "{{ .Values.garage.s3.api.publicEndpoint }}"
+{{- end }}
+{{- if ne (toString .Values.garage.s3.api.publicEndpointPathStyle) "" }}
+public_endpoint_path_style = {{ .Values.garage.s3.api.publicEndpointPathStyle }}
+{{- end }}
 
 [s3_web]
 bind_addr = "[::]:3902"

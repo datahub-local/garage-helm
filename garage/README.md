@@ -1,6 +1,9 @@
 # garage
 
-![Version: 0.9.0](https://img.shields.io/badge/Version-0.9.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.5.0](https://img.shields.io/badge/AppVersion-v2.5.0-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v2.5.0](https://img.shields.io/badge/AppVersion-v2.5.0-informational?style=flat-square)
+
+> [!WARNING]
+> Upgrading an existing release? Read the [migration notes](#migration-notes) below before running `helm upgrade`. Garage v2.5.0 is a one-way upgrade and tightens bucket lifecycle permissions.
 
 S3-compatible object store for small self-hosted geo-distributed deployments.
 
@@ -17,6 +20,51 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 * <https://git.deuxfleurs.fr/Deuxfleurs/garage.git>
 * <https://github.com/deuxfleurs-org/garage>
 * <https://github.com/datahub-local/garage-helm>
+
+## Migration notes
+
+### Chart 1.0.0 — Garage v2.5.0
+
+This chart upgrade deploys Garage v2.5.0, which is **not backwards-compatible**: once a node runs v2.5.0 it must not be downgraded. A cluster can however keep running a mix of v2.x nodes during a rolling upgrade, so upgrade one replica at a time and keep the old image around until every node reports the new version.
+
+- **Set an owner key (recommended).** `Put`, `Get` and `DeleteBucketLifecycle` now return `AccessDenied` for keys that only have read/write permissions. Give the key that manages lifecycle rules owner on the bucket; keep read/write-only keys for data-plane clients.
+
+  In `clusterConfig.keys`, owner is only available through the object bucket form — the string form grants read+write and no owner:
+
+  ```yaml
+  clusterConfig:
+    keys:
+      lifecycle-key:
+        keyId: GK00000000000000000000abcd
+        secretKey: 0000000000000000000000000000000000000000000000000000000000000000
+        buckets:
+          - name: my-bucket
+            read: true
+            write: true
+            owner: true
+  ```
+
+  The once-applied configure job grants owner on the next install or upgrade. To grant it to an existing key without changing values, run:
+
+  ```shell
+  garage bucket allow <bucket> --key <key-id> --owner
+  ```
+
+  or put that command in `clusterConfig.extraCommands`.
+
+- **Set the public S3 endpoint (recommended).** `public_endpoint` is used for generated object URLs and reported by the admin API. Without it Garage guesses the URL from `root_domain`.
+
+  ```yaml
+  garage:
+    s3:
+      api:
+        publicEndpoint: "https://s3.example.com"
+        publicEndpointPathStyle: false # optional: vhost style by default when rootDomain is set
+  ```
+
+- **Optional JSON logs.** Set `garage.logFormat: json` to get one JSON object per line on stderr, instead of the text format.
+
+Existing releases render unchanged manifests after the chart upgrade: the new values default to empty and the pod config checksum stays the same. Only the Garage image changes.
 
 ## Values
 
@@ -62,9 +110,12 @@ S3-compatible object store for small self-hosted geo-distributed deployments.
 | garage.existingConfigMap | string | `""` | if not empty string, allow using an existing ConfigMap for the garage.toml, if set, ignores garage.toml |
 | garage.garageTomlString | string | `""` | String Template for the garage configuration if set, ignores above values. Values can be templated, see https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/ |
 | garage.kubernetesSkipCrd | bool | `false` | Set to true if you want to use k8s discovery but install the CRDs manually outside of the helm chart, for example if you operate at namespace level without cluster ressources |
+| garage.logFormat | string | `""` | Set to "json" to log one JSON object per line on stderr instead of text. Any other value is passed to Garage unchanged (empty means the default text format). https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#environment-variables |
 | garage.metadataAutoSnapshotInterval | string | `""` | If this value is set, Garage will automatically take a snapshot of the metadata DB file at a regular interval and save it in the metadata directory. https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#metadata_auto_snapshot_interval |
 | garage.replicationFactor | string | `"3"` | Default to 3 replicas, see the replication_factor section at https://garagehq.deuxfleurs.fr/documentation/reference-manual/configuration/#replication_factor |
 | garage.rpc.bindAddr | string | `"[::]:3901"` |  |
+| garage.s3.api.publicEndpoint | string | `""` | Publicly reachable S3 endpoint, as a full URI (`https://s3.example.com`). Used for generated object URLs and reported by the admin API; when empty, Garage falls back to `rootDomain`. Recommended since v2.5.0. |
+| garage.s3.api.publicEndpointPathStyle | string | `""` | Whether generated object URLs use path style (`https://endpoint/bucket/key`) instead of vhost style (`https://bucket.endpoint/key`). When unset, Garage uses path style only if `rootDomain` is empty; Garage rejects `false` in that case. |
 | garage.s3.api.region | string | `"garage"` |  |
 | garage.s3.api.rootDomain | string | `".s3.garage.tld"` |  |
 | garage.s3.web.index | string | `"index.html"` |  |

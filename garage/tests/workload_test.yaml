@@ -203,6 +203,23 @@ tests:
             name: MY_CUSTOM_VAR
             value: my-value
 
+  - it: should not set GARAGE_LOG_FORMAT by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GARAGE_LOG_FORMAT
+
+  - it: should set GARAGE_LOG_FORMAT when logFormat is configured
+    set:
+      garage.logFormat: json
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GARAGE_LOG_FORMAT
+            value: json
+
   # Volume mounts tests
   - it: should mount required volumes
     asserts:
