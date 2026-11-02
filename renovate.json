@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>datahub-local/datahub-local-core:renovate-presets/default"],
+  "extends": ["local>datahub-local/datahub-local-core//renovate-presets/default"],
   "includePaths": ["garage/**"],
   "customManagers": [
     {
