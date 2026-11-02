@@ -1,30 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":semanticCommits"
-  ],
-  "schedule": [
-    "* * * * 6"
-  ],
-  "automerge": false,
-  "prCreation": "immediate",
-  "automergeStrategy": "squash",
-  "forkProcessing": "enabled",
+  "extends": ["local>datahub-local/datahub-local-core:renovate-presets/default"],
+  "includePaths": ["garage/**"],
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)garage/Chart\\.yaml$"
-      ],
-      "matchStrings": [
-        "appVersion: \"(?<currentValue>.*?)\""
-      ],
+      "managerFilePatterns": ["/(^|/)garage/Chart\\.yaml$/"],
+      "matchStrings": ["appVersion: \"(?<currentValue>.*?)\""],
       "depNameTemplate": "dxflrs/garage",
       "datasourceTemplate": "docker"
     }
-  ],
-  "includePaths": [
-    "garage/**"
   ]
 }
